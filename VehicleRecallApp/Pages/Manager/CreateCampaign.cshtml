@@ -1,0 +1,145 @@
+@page
+@model VehicleRecallApp.Pages.Manager.CreateCampaignModel
+
+@{
+    ViewData["Title"] = "Create Recall Campaign";
+}
+
+<div class="container py-4">
+    <div class="mb-4">
+        <a asp-page="/Manager/Campaigns" class="text-decoration-none">
+            ← Back to Campaigns
+        </a>
+
+        <h1 class="mt-3">Create Recall Campaign</h1>
+        <p class="text-muted">
+            Enter the official campaign details before importing affected VINs.
+        </p>
+    </div>
+
+    <div class="card shadow-sm">
+        <div class="card-body p-4">
+            <form method="post" enctype="multipart/form-data">
+                <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
+
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <label asp-for="Input.NhtsaId" class="form-label"></label>
+                        <input asp-for="Input.NhtsaId"
+                               class="form-control"
+                               placeholder="Example: 24V-102" />
+                        <span asp-validation-for="Input.NhtsaId" class="text-danger"></span>
+                    </div>
+
+                    <div class="col-md-6">
+                        <label asp-for="Input.SeverityTier" class="form-label"></label>
+                        <select asp-for="Input.SeverityTier" class="form-select">
+                            <option value="">Select severity</option>
+                            <option value="Low">Low</option>
+                            <option value="Medium">Medium</option>
+                            <option value="High">High</option>
+                            <option value="Critical">Critical</option>
+                        </select>
+                        <span asp-validation-for="Input.SeverityTier" class="text-danger"></span>
+                    </div>
+
+                    <div class="col-md-6">
+                        <label asp-for="Input.AffectedComponent" class="form-label"></label>
+                        <input asp-for="Input.AffectedComponent"
+                               class="form-control"
+                               placeholder="Example: Fuel pump" />
+                        <span asp-validation-for="Input.AffectedComponent" class="text-danger"></span>
+                    </div>
+
+                    <div class="col-12">
+                        <label asp-for="Input.DefectDescription" class="form-label"></label>
+                        <textarea asp-for="Input.DefectDescription"
+                                  class="form-control"
+                                  rows="3"
+                                  placeholder="Describe the safety defect and its potential risk."></textarea>
+                        <span asp-validation-for="Input.DefectDescription" class="text-danger"></span>
+                    </div>
+
+                    <div class="col-12">
+                        <label asp-for="Input.RemedyInstructions" class="form-label"></label>
+                        <textarea asp-for="Input.RemedyInstructions"
+                                  class="form-control"
+                                  rows="4"
+                                  placeholder="Describe the no-cost repair or replacement procedure."></textarea>
+                        <span asp-validation-for="Input.RemedyInstructions" class="text-danger"></span>
+                    </div>
+                </div>
+
+                <div class="row g-3 mt-1">
+                    <div class="col-12">
+                        <label asp-for="VinCsvFile" class="form-label">
+                            Customer and VIN CSV File
+                        </label>
+
+                        <input id="vinCsvFile"
+                               asp-for="VinCsvFile"
+                               class="form-control"
+                               type="file"
+                               accept=".csv,text/csv" />
+
+                        <div class="form-text">
+                            Upload a CSV containing affected VINs and customer contact details.
+                        </div>
+
+                        <span asp-validation-for="VinCsvFile" class="text-danger"></span>
+                    </div>
+                </div>
+
+                <div id="csvPreview" class="d-none mt-4" aria-live="polite">
+                    <h2 class="h5">Import Preview</h2>
+                    <p id="csvPreviewSummary" class="text-muted mb-2"></p>
+                    <div class="table-responsive">
+                        <table class="table table-sm table-bordered mb-0">
+                            <thead id="csvPreviewHead"></thead>
+                            <tbody id="csvPreviewBody"></tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <div class="d-flex gap-2 mt-4">
+                    <button type="submit" class="btn btn-primary">
+                        Create Campaign
+                    </button>
+
+                    <a asp-page="/Manager/Campaigns" class="btn btn-outline-secondary">
+                        Cancel
+                    </a>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+    <script>
+        document.getElementById('vinCsvFile')?.addEventListener('change', event => {
+            const file = event.target.files[0];
+            const preview = document.getElementById('csvPreview');
+
+            if (!file) {
+                preview.classList.add('d-none');
+                return;
+            }
+
+            const reader = new FileReader();
+            reader.onload = () => {
+                const rows = reader.result.trim().split(/\r?\n/).slice(0, 6);
+                const values = rows.map(row => row.split(',').map(value => value.trim()));
+                const head = document.getElementById('csvPreviewHead');
+                const body = document.getElementById('csvPreviewBody');
+
+                head.innerHTML = `<tr>${values[0].map(value => `<th scope="col">${value}</th>`).join('')}</tr>`;
+                body.innerHTML = values.slice(1).map(row => `<tr>${row.map(value => `<td>${value}</td>`).join('')}</tr>`).join('');
+                document.getElementById('csvPreviewSummary').textContent = `${file.name} selected. Showing the first ${Math.max(values.length - 1, 0)} data rows.`;
+                preview.classList.remove('d-none');
+            };
+            reader.readAsText(file);
+        });
+    </script>
+}

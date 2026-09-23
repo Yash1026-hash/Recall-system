@@ -1,0 +1,152 @@
+﻿@page
+@model IndexModel
+@{
+    ViewData["Title"] = "Vehicle Recall Operations";
+    var isCustomer = User.IsInRole("Customer");
+    var isManager = User.IsInRole("Manager");
+    var isTechnician = User.IsInRole("Technician");
+}
+
+<div class="home-shell">
+    <section class="home-intro">
+        <div class="home-copy">
+            <p class="eyebrow mb-3">OEM recall operations</p>
+            <h1>Protect customers and keep recall execution on schedule.</h1>
+            <p class="lead text-muted">
+                A practical workflow for identifying affected vehicles, coordinating repairs, and closing every recall action with clear accountability.
+            </p>
+
+            <div class="d-flex flex-wrap gap-2 mt-4">
+                @if (isCustomer)
+                {
+                    <a asp-page="/Customer/RecallLookup" class="btn btn-primary btn-lg home-primary-action">Check a VIN</a>
+                }
+                else
+                {
+                    <a asp-page="/Account/Login" class="btn btn-primary btn-lg home-primary-action">Sign in as customer</a>
+                }
+
+                @if (isManager)
+                {
+                    <a asp-page="/Manager/Dashboard" class="btn btn-outline-primary btn-lg">Open manager view</a>
+                }
+                else
+                {
+                    <a asp-page="/Account/Login" class="btn btn-outline-primary btn-lg">View demo portals</a>
+                }
+            </div>
+        </div>
+
+        <div class="home-signal" aria-label="Recall service summary">
+            <div class="signal-mark">VR</div>
+            <div>
+                <p class="eyebrow mb-1">Connected recall flow</p>
+                <p class="mb-0 text-muted">
+                    VIN match, customer communication, service scheduling, and technician completion in one view.
+                </p>
+            </div>
+        </div>
+    </section>
+
+    <section class="home-process" aria-label="Recall service process">
+        <div class="process-step">
+            <span class="process-number">01</span>
+            <div>
+                <strong>Identify</strong>
+                <span>Match affected VINs to open campaigns.</span>
+            </div>
+        </div>
+
+        <div class="process-rule" aria-hidden="true"></div>
+
+        <div class="process-step">
+            <span class="process-number">02</span>
+            <div>
+                <strong>Schedule</strong>
+                <span>Book service and notify the customer.</span>
+            </div>
+        </div>
+
+        <div class="process-rule" aria-hidden="true"></div>
+
+        <div class="process-step">
+            <span class="process-number">03</span>
+            <div>
+                <strong>Resolve</strong>
+                <span>Track repair completion and close the loop.</span>
+            </div>
+        </div>
+    </section>
+
+    <section class="home-portals" aria-labelledby="portal-heading">
+        <div class="mb-3">
+            <p class="eyebrow mb-1">Role-based access</p>
+            <h2 id="portal-heading" class="h3 mb-0">Choose the view for your team</h2>
+        </div>
+
+        <div class="row g-3">
+            <div class="col-md-4">
+                @if (isCustomer)
+                {
+                    <a asp-page="/Customer/Dashboard" class="portal-tile">
+                        <span class="portal-index">01</span>
+                        <span class="portal-title">Customer Portal</span>
+                        <span class="portal-description">Look up recalls, book service, and track a repair.</span>
+                        <span class="portal-arrow" aria-hidden="true">&rarr;</span>
+                    </a>
+                }
+                else
+                {
+                    <a asp-page="/Account/Login" class="portal-tile portal-tile-locked">
+                        <span class="portal-index">01</span>
+                        <span class="portal-title">Customer Portal</span>
+                        <span class="portal-description">Sign in with a customer account to view recall status and service booking.</span>
+                        <span class="portal-arrow" aria-hidden="true">&rarr;</span>
+                    </a>
+                }
+            </div>
+
+            <div class="col-md-4">
+                @if (isManager)
+                {
+                    <a asp-page="/Manager/Dashboard" class="portal-tile">
+                        <span class="portal-index">02</span>
+                        <span class="portal-title">Manager Portal</span>
+                        <span class="portal-description">Manage campaigns, VIN imports, notifications, and operation reports.</span>
+                        <span class="portal-arrow" aria-hidden="true">&rarr;</span>
+                    </a>
+                }
+                else
+                {
+                    <a asp-page="/Account/Login" class="portal-tile portal-tile-locked">
+                        <span class="portal-index">02</span>
+                        <span class="portal-title">Manager Portal</span>
+                        <span class="portal-description">Use the manager demo account to monitor fields and campaign execution.</span>
+                        <span class="portal-arrow" aria-hidden="true">&rarr;</span>
+                    </a>
+                }
+            </div>
+
+            <div class="col-md-4">
+                @if (isTechnician)
+                {
+                    <a asp-page="/Technician/Dashboard" class="portal-tile">
+                        <span class="portal-index">03</span>
+                        <span class="portal-title">Technician Portal</span>
+                        <span class="portal-description">Work the daily queue and complete repair sign-off.</span>
+                        <span class="portal-arrow" aria-hidden="true">&rarr;</span>
+                    </a>
+                }
+                else
+                {
+                    <a asp-page="/Account/Login" class="portal-tile portal-tile-locked">
+                        <span class="portal-index">03</span>
+                        <span class="portal-title">Technician Portal</span>
+                        <span class="portal-description">Log in as a technician to review jobs, work orders, and repair completion.</span>
+                        <span class="portal-arrow" aria-hidden="true">&rarr;</span>
+                    </a>
+                }
+            </div>
+        </div>
+    </section>
+</div>

@@ -1,0 +1,67 @@
+@page
+@model VehicleRecallApp.Pages.Technician.DashboardModel
+
+@{
+    ViewData["Title"] = "Technician Dashboard";
+}
+
+<div class="container py-4">
+    <div class="mb-4">
+        <h1>Technician Dashboard</h1>
+        <p class="text-muted mb-0">
+            Review scheduled recall work and update vehicle repair progress.
+        </p>
+    </div>
+
+    <div class="row g-3">
+        <div class="col-md-6 col-lg-3">
+            <div class="card h-100 shadow-sm">
+                <div class="card-body">
+                    <p class="text-muted mb-1">Jobs Today</p>
+                    <h2>@Model.JobsToday</h2>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-6 col-lg-3">
+            <div class="card h-100 shadow-sm">
+                <div class="card-body">
+                    <p class="text-muted mb-1">Checked In</p>
+                    <h2>@Model.CheckedInJobs</h2>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-6 col-lg-3">
+            <div class="card h-100 shadow-sm">
+                <div class="card-body">
+                    <p class="text-muted mb-1">In Progress</p>
+                    <h2>@Model.InProgressJobs</h2>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-6 col-lg-3">
+            <div class="card h-100 shadow-sm">
+                <div class="card-body">
+                    <p class="text-muted mb-1">Ready for Pickup</p>
+                    <h2>@Model.ReadyForPickupJobs</h2>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="d-flex flex-wrap gap-2 mt-4">
+        <a asp-page="/Technician/ServiceQueue" class="btn btn-primary">
+            View Service Queue
+        </a>
+
+        <a asp-page="/Technician/WorkOrder" class="btn btn-outline-primary">
+            Open Work Order
+        </a>
+
+        <a asp-page="/Technician/Remediation" class="btn btn-outline-primary">
+            Complete Remediation
+        </a>
+    </div>
+</div>

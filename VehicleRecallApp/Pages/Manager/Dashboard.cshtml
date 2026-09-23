@@ -1,0 +1,70 @@
+@page
+@model VehicleRecallApp.Pages.Manager.DashboardModel
+
+@{
+    ViewData["Title"] = "Recall Manager Dashboard";
+}
+
+<div class="container py-4">
+    <div class="mb-4">
+        <p class="eyebrow mb-2">Operations overview</p>
+        <h1 class="mb-1">Recall Manager Dashboard</h1>
+        <p class="text-muted mb-0">Monitor campaigns, affected vehicles, and repair progress.</p>
+    </div>
+
+    <div class="d-flex flex-wrap gap-2 mb-4">
+        <a asp-page="/Manager/Campaigns" class="btn btn-primary">
+            Manage Campaigns
+        </a>
+
+    <a asp-page="/Manager/VinImport" class="btn btn-outline-primary">
+        VIN Import Results
+    </a>
+
+    <a asp-page="/Manager/Notifications" class="btn btn-outline-primary">
+        Notifications
+    </a>
+
+    <a asp-page="/Manager/Reports" class="btn btn-outline-primary">
+        View Reports
+    </a>
+    </div>
+
+    <div class="row g-3">
+        <div class="col-md-6 col-lg-3">
+            <div class="card h-100 shadow-sm">
+                <div class="card-body">
+                    <p class="text-muted mb-1">Active Campaigns</p>
+                    <h2>@Model.ActiveCampaigns</h2>
+                    </div>
+            </div>
+        </div>
+
+        <div class="col-md-6 col-lg-3">
+            <div class="card h-100 shadow-sm">
+                <div class="card-body">
+                    <p class="text-muted mb-1">Affected VINs</p>
+                    <h2>@Model.AffectedVins.ToString("N0")</h2>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-6 col-lg-3">
+            <div class="card h-100 shadow-sm">
+                <div class="card-body">
+                    <p class="text-muted mb-1">Appointments Scheduled</p>
+                    <h2>@Model.ScheduledAppointments.ToString("N0")</h2>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-6 col-lg-3">
+            <div class="card h-100 shadow-sm">
+                <div class="card-body">
+                    <p class="text-muted mb-1">Remediation Rate</p>
+                    <h2>@Model.RemediationRate%</h2>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

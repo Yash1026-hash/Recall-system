@@ -1,0 +1,192 @@
+@page
+@model VehicleRecallApp.Pages.Technician.WorkOrderModel
+
+@{
+    ViewData["Title"] = "Work Order";
+}
+
+<div class="container py-4">
+    <div class="mb-4">
+        <a asp-page="/Technician/ServiceQueue" class="text-decoration-none">
+            ← Back to Service Queue
+        </a>
+
+        <h1 class="mt-3 mb-1">Work Order @Model.WorkOrder.WorkOrderNumber</h1>
+        <p class="text-muted mb-0">
+            Review vehicle details and update recall repair progress.
+        </p>
+    </div>
+
+    <div class="row g-4">
+        <div class="col-lg-8">
+            <div class="card shadow-sm">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-start mb-4">
+                        <div>
+                            <h2 class="h4 mb-1">Vehicle and Customer</h2>
+                            <p class="text-muted mb-0">
+                                Recall campaign @Model.WorkOrder.CampaignId
+                            </p>
+                        </div>
+
+                        <span class="badge bg-primary">
+                            @Model.WorkOrder.Status
+                        </span>
+                    </div>
+
+                    <dl class="row g-3 mb-0">
+                        <div class="col-md-6">
+                            <dt class="text-muted fw-normal">Customer</dt>
+                            <dd class="fw-semibold mb-0">@Model.WorkOrder.CustomerName</dd>
+                        </div>
+
+                        <div class="col-md-6">
+                            <dt class="text-muted fw-normal">Vehicle</dt>
+                            <dd class="fw-semibold mb-0">@Model.WorkOrder.Vehicle</dd>
+                        </div>
+
+                        <div class="col-md-6">
+                            <dt class="text-muted fw-normal">VIN</dt>
+                            <dd class="font-monospace mb-0">@Model.WorkOrder.Vin</dd>
+                        </div>
+
+                        <div class="col-md-6">
+                            <dt class="text-muted fw-normal">Campaign</dt>
+                            <dd class="mb-0">@Model.WorkOrder.CampaignId</dd>
+                        </div>
+                    </dl>
+                </div>
+            </div>
+
+            <div class="card shadow-sm mt-4">
+                <div class="card-body">
+                    <h2 class="h4 mb-3">Repair Checklist</h2>
+
+                    <form id="workOrderChecklist"
+                          data-work-order="@Model.WorkOrder.WorkOrderNumber"
+                          data-next-url="@Url.Page("/Technician/Remediation", new { workOrderNumber = Model.WorkOrder.WorkOrderNumber })">
+                        <div id="workOrderValidation"
+                             class="alert alert-warning d-none"
+                             role="alert">
+                            Complete all three checklist items before continuing.
+                        </div>
+
+                        <div class="form-check mb-3">
+                            <input class="form-check-input"
+                                   type="checkbox"
+                                   id="inspectionComplete"
+                                   required>
+                            <label class="form-check-label" for="inspectionComplete">
+                                Vehicle inspection completed
+                            </label>
+                        </div>
+
+                        <div class="form-check mb-3">
+                            <input class="form-check-input"
+                                   type="checkbox"
+                                   id="partsVerified"
+                                   required>
+                            <label class="form-check-label" for="partsVerified">
+                                Replacement parts verified
+                            </label>
+                        </div>
+
+                        <div class="form-check mb-3">
+                            <input class="form-check-input"
+                                   type="checkbox"
+                                   id="repairComplete"
+                                   required>
+                            <label class="form-check-label" for="repairComplete">
+                                Recall repair completed
+                            </label>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="technicianNotes" class="form-label">
+                                Technician Notes
+                            </label>
+                            <textarea id="technicianNotes"
+                                      class="form-control"
+                                      rows="4"
+                                      placeholder="Enter repair notes"></textarea>
+                        </div>
+
+                        <button type="submit" class="btn btn-primary">
+                            Continue to Remediation
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-4">
+            <div class="card shadow-sm">
+                <div class="card-body">
+                    <h2 class="h5 mb-3">Appointment Details</h2>
+
+                    <dl class="row mb-0">
+                        <dt class="col-6">Time</dt>
+                        <dd class="col-6">@Model.WorkOrder.AppointmentTime</dd>
+
+                        <dt class="col-6">Bay</dt>
+                        <dd class="col-6">@Model.WorkOrder.Bay</dd>
+
+                        <dt class="col-6">Technician</dt>
+                        <dd class="col-6">@Model.WorkOrder.Technician</dd>
+                    </dl>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        const workOrderChecklist = document.getElementById('workOrderChecklist');
+
+        if (workOrderChecklist) {
+            const workOrderKey = `work-order-${workOrderChecklist.dataset.workOrder}`;
+            const validationMessage = document.getElementById('workOrderValidation');
+            const checklistIds = ['inspectionComplete', 'partsVerified', 'repairComplete'];
+
+            try {
+                const savedDraft = JSON.parse(localStorage.getItem(workOrderKey));
+
+                if (savedDraft) {
+                    checklistIds.forEach(id => {
+                        document.getElementById(id).checked = savedDraft[id] === true;
+                    });
+
+                    document.getElementById('technicianNotes').value = savedDraft.notes || '';
+                }
+            } catch {
+                // Ignore unavailable browser storage and keep the form usable.
+            }
+
+            workOrderChecklist.addEventListener('submit', event => {
+                event.preventDefault();
+
+                if (!workOrderChecklist.checkValidity()) {
+                    validationMessage.classList.remove('d-none');
+                    workOrderChecklist.reportValidity();
+                    return;
+                }
+
+                const draft = {
+                    inspectionComplete: document.getElementById('inspectionComplete').checked,
+                    partsVerified: document.getElementById('partsVerified').checked,
+                    repairComplete: document.getElementById('repairComplete').checked,
+                    notes: document.getElementById('technicianNotes').value
+                };
+
+                try {
+                    localStorage.setItem(workOrderKey, JSON.stringify(draft));
+                } catch {
+                    // Continue to the next screen even when storage is unavailable.
+                }
+
+                window.location.href = workOrderChecklist.dataset.nextUrl;
+            });
+        }
+    </script>
+}

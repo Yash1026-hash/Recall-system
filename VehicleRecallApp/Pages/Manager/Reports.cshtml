@@ -1,0 +1,84 @@
+@page
+@model VehicleRecallApp.Pages.Manager.ReportsModel
+
+@{
+    ViewData["Title"] = "Compliance Reports";
+}
+
+<div class="container py-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <a asp-page="/Manager/Campaigns" class="text-decoration-none">
+                ← Back to Campaigns
+            </a>
+
+            <h1 class="mt-3">Compliance Reports</h1>
+            <p class="text-muted mb-0">
+                Recall campaign and VIN remediation overview.
+            </p>
+        </div>
+
+        <button id="exportReportButton" type="button" class="btn btn-outline-primary">
+            Export Report
+        </button>
+    </div>
+
+    <div class="row g-3">
+        <div class="col-md-4">
+            <div class="card h-100 border-primary shadow-sm">
+                <div class="card-body">
+                    <p class="text-muted mb-1">Total Campaigns</p>
+                    <h2 class="mb-0">@Model.TotalCampaigns</h2>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4">
+            <div class="card h-100 border-warning shadow-sm">
+                <div class="card-body">
+                    <p class="text-muted mb-1">Active Campaigns</p>
+                    <h2 class="mb-0 text-warning">@Model.ActiveCampaigns</h2>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4">
+            <div class="card h-100 border-success shadow-sm">
+                <div class="card-body">
+                    <p class="text-muted mb-1">Total Affected VINs</p>
+                    <h2 class="mb-0 text-success">
+                        @Model.TotalAffectedVins.ToString("N0")
+                    </h2>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="reportExportStatus" class="alert alert-info mt-4 mb-0" role="status">
+        Export a CSV snapshot of the summary shown above. Live remediation-rate reporting will be connected later.
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        document.getElementById('exportReportButton')?.addEventListener('click', () => {
+            const rows = [
+                ['Metric', 'Value'],
+                ['Total Campaigns', '@Model.TotalCampaigns'],
+                ['Active Campaigns', '@Model.ActiveCampaigns'],
+                ['Total Affected VINs', '@Model.TotalAffectedVins']
+            ];
+
+            const csv = rows.map(row => row.map(value => `"${value}"`).join(',')).join('\n');
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(new Blob([csv], { type: 'text/csv' }));
+            link.download = 'recall-compliance-report.csv';
+            link.click();
+            URL.revokeObjectURL(link.href);
+
+            const status = document.getElementById('reportExportStatus');
+            status.textContent = 'Report downloaded as recall-compliance-report.csv.';
+            status.className = 'alert alert-success mt-4 mb-0';
+        });
+    </script>
+}

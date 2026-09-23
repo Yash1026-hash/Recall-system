@@ -1,0 +1,65 @@
+@page
+@model VehicleRecallApp.Pages.Customer.DashboardModel
+
+@{
+    ViewData["Title"] = "Customer Dashboard";
+}
+
+<div class="container py-4">
+    <div class="mb-4">
+        <h1>Welcome, @Model.OwnerName</h1>
+        <p class="text-muted mb-0">
+            Check vehicle recalls, book a no-cost repair, or track your appointment.
+        </p>
+    </div>
+
+    <div class="row g-4">
+        <div class="col-md-4">
+            <div class="card h-100 shadow-sm">
+                <div class="card-body d-flex flex-column">
+                    <h2 class="h4">Check Recall Status</h2>
+                    <p class="text-muted">
+                        Enter your 17-character VIN to see open safety recalls.
+                    </p>
+
+                    <a asp-page="/Customer/RecallLookup"
+                       class="btn btn-primary mt-auto">
+                        Check My VIN
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4">
+            <div class="card h-100 shadow-sm">
+                <div class="card-body d-flex flex-column">
+                    <h2 class="h4">Book a Repair</h2>
+                    <p class="text-muted">
+                        Find an authorized service center and choose a time slot.
+                    </p>
+
+                    <a asp-page="/Customer/BookAppointment"
+                       class="btn btn-outline-primary mt-auto">
+                        Book Appointment
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4">
+            <div class="card h-100 shadow-sm">
+                <div class="card-body d-flex flex-column">
+                    <h2 class="h4">Track My Repair</h2>
+                    <p class="text-muted">
+                        Follow your vehicle from appointment to pickup.
+                    </p>
+
+                    <a asp-page="/Customer/TrackRepair"
+                       class="btn btn-outline-primary mt-auto">
+                        Track Repair
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

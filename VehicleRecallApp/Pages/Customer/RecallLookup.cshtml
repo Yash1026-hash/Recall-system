@@ -1,0 +1,104 @@
+@page
+@model VehicleRecallApp.Pages.Customer.RecallLookupModel
+
+@{
+    ViewData["Title"] = "VIN Recall Lookup";
+}
+
+<div class="container py-4">
+    <a asp-page="/Customer/Dashboard" class="text-decoration-none">
+        ← Back to Customer Dashboard
+    </a>
+
+    <div class="row justify-content-center mt-3">
+        <div class="col-lg-8">
+            <div class="text-center mb-4">
+                <h1>Check Your Vehicle for Recalls</h1>
+                <p class="text-muted mb-0">
+                    Enter your 17-character VIN to find active safety recalls.
+                </p>
+            </div>
+
+            <div class="card shadow-sm">
+                <div class="card-body p-4">
+                    <form method="post">
+                        <div asp-validation-summary="ModelOnly"
+                             class="text-danger mb-3"></div>
+
+                        <label asp-for="Vin" class="form-label"></label>
+
+                        <div class="input-group">
+                            <input asp-for="Vin"
+                                   class="form-control"
+                                   placeholder="Example: 1HGCM82633A004352"
+                                   autocomplete="off" />
+
+                            <button type="submit" class="btn btn-primary">
+                                Check VIN
+                            </button>
+                        </div>
+
+                        <span asp-validation-for="Vin" class="text-danger"></span>
+
+                        <p class="form-text mt-2 mb-0">
+                            Your VIN is usually found on the dashboard near the windshield
+                            or on your vehicle registration document.
+                        </p>
+                    </form>
+                </div>
+            </div>
+
+            @if (Model.SearchCompleted && Model.ActiveRecall is not null)
+            {
+                <div class="card border-danger shadow-sm mt-4">
+                    <div class="card-header bg-danger text-white">
+                        <strong>Active Safety Recall Found</strong>
+                    </div>
+
+                    <div class="card-body">
+                        <p class="mb-2">
+                            <strong>Campaign:</strong> @Model.ActiveRecall.CampaignId
+                        </p>
+
+                        <p class="mb-2">
+                            <strong>Defect:</strong> @Model.ActiveRecall.DefectDescription
+                        </p>
+
+                        <p class="mb-2">
+                            <strong>Safety Hazard:</strong> @Model.ActiveRecall.SafetyHazard
+                        </p>
+
+                        <p class="mb-4">
+                            <strong>Free Remedy:</strong> @Model.ActiveRecall.Remedy
+                        </p>
+
+                        <a asp-page="/Customer/BookAppointment"
+                           class="btn btn-danger">
+                            Book a No-Cost Repair
+                        </a>
+                    </div>
+                </div>
+            }
+            else if (Model.SearchCompleted)
+            {
+                <div class="alert alert-success mt-4" role="alert">
+                    <h2 class="h5">No Active Safety Recalls Found</h2>
+                    <p class="mb-0">
+                        This VIN currently has no active recall campaigns in our system.
+                    </p>
+                </div>
+            }
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+    <script>
+        const lookupVin = '@Model.Vin';
+
+        if ('@Model.SearchCompleted' === 'True' && lookupVin) {
+            localStorage.setItem('recall-vin', lookupVin);
+        }
+    </script>
+}

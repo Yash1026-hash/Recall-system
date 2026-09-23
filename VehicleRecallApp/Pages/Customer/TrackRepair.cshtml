@@ -1,0 +1,111 @@
+@page
+@model VehicleRecallApp.Pages.Customer.TrackRepairModel
+
+@{
+    ViewData["Title"] = "Track Repair";
+}
+
+<div class="container py-4">
+    <a asp-page="/Customer/Dashboard" class="text-decoration-none">
+        ← Back to Customer Dashboard
+    </a>
+
+    <div class="row justify-content-center mt-3">
+        <div class="col-lg-8">
+            <div class="text-center mb-4">
+                <h1>Track Your Repair</h1>
+                <p class="text-muted mb-0">
+                    Enter your booking reference and VIN to see your repair status.
+                </p>
+            </div>
+
+            <div class="card shadow-sm">
+                <div class="card-body p-4">
+                    <form method="post">
+                        <div asp-validation-summary="ModelOnly"
+                             class="text-danger mb-3"></div>
+
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label asp-for="BookingReference" class="form-label"></label>
+                                <input asp-for="BookingReference"
+                                       class="form-control"
+                                       placeholder="Example: RC-123456" />
+                                <span asp-validation-for="BookingReference"
+                                      class="text-danger"></span>
+                            </div>
+
+                            <div class="col-md-6">
+                                <label asp-for="Vin" class="form-label"></label>
+                                <input asp-for="Vin"
+                                       class="form-control"
+                                       placeholder="17-character VIN" />
+                                <span asp-validation-for="Vin"
+                                      class="text-danger"></span>
+                            </div>
+                        </div>
+
+                        <button type="submit" class="btn btn-primary mt-4">
+                            Track Repair
+                        </button>
+                    </form>
+                </div>
+            </div>
+
+            @if (Model.TrackingFound)
+            {
+                <div class="card shadow-sm mt-4">
+                    <div class="card-header bg-white">
+                        <h2 class="h5 mb-0">
+                            Current Status:
+                            <span class="text-primary">@Model.CurrentStatus</span>
+                        </h2>
+                    </div>
+
+                    <div class="card-body">
+                        <div class="list-group">
+                            @foreach (var step in Model.Steps)
+                            {
+                                <div class="list-group-item d-flex justify-content-between align-items-center">
+                                    <span>@step.Name</span>
+
+                                    @if (step.Completed)
+                                    {
+                                        <span class="badge bg-success">Complete</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="badge bg-secondary">Pending</span>
+                                    }
+                                </div>
+                            }
+                        </div>
+                    </div>
+                </div>
+            }
+            else if (HttpContext.Request.Method == "POST" && ModelState.IsValid)
+            {
+                <div class="alert alert-warning mt-4" role="alert">
+                    No repair appointment was found for this booking reference and VIN.
+                </div>
+            }
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+    <script>
+        const bookingReferenceInput = document.getElementById('BookingReference');
+        const vinInput = document.getElementById('Vin');
+        const params = new URLSearchParams(window.location.search);
+
+        if (bookingReferenceInput) {
+            bookingReferenceInput.value = params.get('bookingReference') || localStorage.getItem('booking-reference') || '';
+        }
+
+        if (vinInput) {
+            vinInput.value = localStorage.getItem('recall-vin') || '';
+        }
+    </script>
+}

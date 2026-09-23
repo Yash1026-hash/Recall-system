@@ -1,0 +1,102 @@
+@page
+@model VehicleRecallApp.Pages.Manager.VinImportModel
+
+@{
+    ViewData["Title"] = "VIN Import Results";
+}
+
+<div class="container py-4">
+    <a asp-page="/Manager/Campaigns" class="text-decoration-none">
+        ← Back to Campaigns
+    </a>
+
+    <div class="mt-3 mb-4">
+        <h1>VIN Import Results</h1>
+        <p class="text-muted mb-0">
+            Campaign: <strong>@Model.CampaignId</strong>
+        </p>
+    </div>
+
+    <div class="row g-3 mb-4">
+        <div class="col-md-4">
+            <div class="card border-primary h-100">
+                <div class="card-body">
+                    <p class="text-muted mb-1">Total CSV Records</p>
+                    <h2>@Model.TotalRecords.ToString("N0")</h2>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4">
+            <div class="card border-success h-100">
+                <div class="card-body">
+                    <p class="text-muted mb-1">Successfully Imported</p>
+                    <h2 class="text-success">@Model.SuccessfulImports.ToString("N0")</h2>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4">
+            <div class="card border-danger h-100">
+                <div class="card-body">
+                    <p class="text-muted mb-1">Malformed VIN Records</p>
+                    <h2 class="text-danger">@Model.FailedImports.ToString("N0")</h2>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    @if (Model.FailedImports > 0)
+    {
+        <div class="card shadow-sm">
+            <div class="card-header bg-white d-flex justify-content-between align-items-center">
+                <h2 class="h5 mb-0">Records Requiring Attention</h2>
+
+                <button id="downloadErrorsButton" type="button" class="btn btn-outline-danger btn-sm">
+                    Download Error CSV
+                </button>
+            </div>
+
+            <div class="table-responsive">
+                <table class="table table-hover mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th>CSV Row</th>
+                            <th>VIN</th>
+                            <th>Validation Error</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var error in Model.Errors)
+                        {
+                            <tr>
+                                <td>@error.RowNumber</td>
+                                <td class="font-monospace">@error.Vin</td>
+                                <td class="text-danger">@error.Reason</td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    }
+</div>
+
+@section Scripts {
+    <script>
+        document.getElementById('downloadErrorsButton')?.addEventListener('click', () => {
+            const rows = [['CSV Row', 'VIN', 'Validation Error']];
+
+            document.querySelectorAll('table tbody tr').forEach(row => {
+                rows.push(Array.from(row.cells).map(cell => cell.textContent.trim()));
+            });
+
+            const csv = rows.map(row => row.map(value => `"${value.replaceAll('"', '""')}"`).join(',')).join('\n');
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(new Blob([csv], { type: 'text/csv' }));
+            link.download = 'vin-import-errors.csv';
+            link.click();
+            URL.revokeObjectURL(link.href);
+        });
+    </script>
+}

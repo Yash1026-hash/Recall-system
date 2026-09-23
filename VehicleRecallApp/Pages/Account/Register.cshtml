@@ -1,0 +1,109 @@
+@page
+@model VehicleRecallApp.Pages.Account.RegisterModel
+@{
+    ViewData["Title"] = "Create account";
+}
+
+<div class="login-container">
+    <p class="eyebrow mb-2">Vehicle Recall App</p>
+    <h1 class="h2 mb-2">Create your account</h1>
+    <p class="text-muted mb-4">
+        Use your email address to create a customer account.
+    </p>
+
+    @if (Model.RegistrationComplete)
+    {
+        <div class="alert alert-success" role="alert">
+            Your account was created successfully.
+            <a asp-page="/Account/Login">Sign in now</a>.
+        </div>
+    }
+    else
+    {
+        @if (!string.IsNullOrWhiteSpace(Model.ErrorMessage))
+        {
+            <div class="alert alert-danger" role="alert">
+                @Model.ErrorMessage
+            </div>
+        }
+
+        <form method="post">
+            <div asp-validation-summary="ModelOnly"
+                 class="text-danger mb-3"></div>
+
+            <div class="mb-3">
+                <label asp-for="Registration.Email" class="form-label">
+                    Email address
+                </label>
+                <input asp-for="Registration.Email"
+                       type="email"
+                       class="form-control"
+                       autocomplete="email" />
+                <span asp-validation-for="Registration.Email"
+                      class="text-danger small"></span>
+            </div>
+
+            <div class="mb-3">
+                <label asp-for="Registration.FullName"
+                       class="form-label">
+                    Full name
+                </label>
+                <input asp-for="Registration.FullName"
+                       class="form-control"
+                       autocomplete="name" />
+                <span asp-validation-for="Registration.FullName"
+                      class="text-danger small"></span>
+            </div>
+
+            <div class="mb-3">
+                <label asp-for="Registration.Username"
+                       class="form-label">
+                    Username
+                </label>
+                <input asp-for="Registration.Username"
+                       class="form-control"
+                       autocomplete="username" />
+                <span asp-validation-for="Registration.Username"
+                      class="text-danger small"></span>
+            </div>
+
+            <div class="mb-3">
+                <label asp-for="Registration.Password"
+                       class="form-label">
+                    Password
+                </label>
+                <input asp-for="Registration.Password"
+                       type="password"
+                       class="form-control"
+                       autocomplete="new-password" />
+                <span asp-validation-for="Registration.Password"
+                      class="text-danger small"></span>
+            </div>
+
+            <div class="mb-3">
+                <label asp-for="Registration.ConfirmPassword"
+                       class="form-label">
+                    Confirm password
+                </label>
+                <input asp-for="Registration.ConfirmPassword"
+                       type="password"
+                       class="form-control"
+                       autocomplete="new-password" />
+                <span asp-validation-for="Registration.ConfirmPassword"
+                      class="text-danger small"></span>
+            </div>
+
+            <button type="submit" class="btn btn-primary w-100">
+                Create account
+            </button>
+        </form>
+    }
+
+    <div class="mt-4 text-center">
+        <a asp-page="/Account/Login">Back to sign in</a>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

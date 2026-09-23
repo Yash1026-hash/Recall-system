@@ -1,0 +1,115 @@
+@page
+@model VehicleRecallApp.Pages.Customer.BookAppointmentModel
+
+@{
+    ViewData["Title"] = "Book Recall Repair";
+}
+
+<div class="container py-4">
+    <a asp-page="/Customer/Dashboard" class="text-decoration-none">
+        ← Back to Customer Dashboard
+    </a>
+
+    <h1 class="mt-3">Book a No-Cost Recall Repair</h1>
+    <p class="text-muted">Choose a service center and appointment time.</p>
+
+    @if (Model.BookingConfirmed)
+    {
+           <div id="bookingConfirmation"
+               class="alert alert-success"
+               role="alert"
+               data-booking-reference="@Model.BookingReference">
+            <h2 class="h5">Appointment Confirmed</h2>
+            <p class="mb-3">
+                Your booking reference is <strong>@Model.BookingReference</strong>.
+            </p>
+
+            <a asp-page="/Customer/TrackRepair" class="btn btn-success">
+                Track My Repair
+            </a>
+        </div>
+    }
+    else
+    {
+        <div class="card shadow-sm">
+            <div class="card-body p-4">
+                <form method="post">
+                    <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
+
+                    <div class="row g-3">
+                        <div class="col-12">
+                            <label asp-for="Input.ServiceCenterId" class="form-label"></label>
+                            <select asp-for="Input.ServiceCenterId" class="form-select">
+                                <option value="">Select a service center</option>
+
+                                @foreach (var center in Model.ServiceCenters)
+                                {
+                                    <option value="@center.Id">
+                                        @center.Name — @center.City (@center.Distance)
+                                    </option>
+                                }
+                            </select>
+                            <span asp-validation-for="Input.ServiceCenterId" class="text-danger"></span>
+                        </div>
+
+                        <div class="col-md-6">
+                            <label asp-for="Input.AppointmentDate" class="form-label"></label>
+                            <input asp-for="Input.AppointmentDate"
+                                class="form-control"
+                                min="@DateTime.Today.AddDays(1).ToString("yyyy-MM-dd")" />
+                            <span asp-validation-for="Input.AppointmentDate" class="text-danger"></span>
+                        </div>
+
+                        <div class="col-md-6">
+                            <label asp-for="Input.TimeSlot" class="form-label"></label>
+                            <select asp-for="Input.TimeSlot" class="form-select">
+                                <option value="">Select a time</option>
+                                <option value="09:00 AM">09:00 AM</option>
+                                <option value="11:00 AM">11:00 AM</option>
+                                <option value="02:00 PM">02:00 PM</option>
+                                <option value="04:00 PM">04:00 PM</option>
+                            </select>
+                            <span asp-validation-for="Input.TimeSlot" class="text-danger"></span>
+                        </div>
+
+                        <div class="col-md-6">
+                            <label asp-for="Input.OwnerName" class="form-label"></label>
+                            <input asp-for="Input.OwnerName" class="form-control" />
+                            <span asp-validation-for="Input.OwnerName" class="text-danger"></span>
+                        </div>
+
+                        <div class="col-md-6">
+                            <label asp-for="Input.Phone" class="form-label"></label>
+                            <input asp-for="Input.Phone" class="form-control" />
+                            <span asp-validation-for="Input.Phone" class="text-danger"></span>
+                        </div>
+
+                        <div class="col-12">
+                            <label asp-for="Input.Email" class="form-label"></label>
+                            <input asp-for="Input.Email" class="form-control" />
+                            <span asp-validation-for="Input.Email" class="text-danger"></span>
+                        </div>
+                    </div>
+
+                    <button type="submit" class="btn btn-primary mt-4">
+                        Confirm Appointment
+                    </button>
+                </form>
+            </div>
+        </div>
+    }
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+    <script>
+        const bookingConfirmation = document.getElementById('bookingConfirmation');
+
+        if (bookingConfirmation) {
+            localStorage.setItem('booking-reference', bookingConfirmation.dataset.bookingReference);
+
+            const trackLink = bookingConfirmation.querySelector('a');
+            trackLink.href = `${trackLink.href}?bookingReference=${encodeURIComponent(bookingConfirmation.dataset.bookingReference)}`;
+        }
+    </script>
+}
