@@ -1,0 +1,125 @@
+@page "/Manager/Campaigns/{campaignId}"
+@model VehicleRecallApp.Pages.Manager.CampaignOverviewModel
+
+@{
+    ViewData["Title"] = $"Campaign {Model.Campaign.NhtsaId}";
+}
+
+<div class="container py-4">
+    <a asp-page="/Manager/Campaigns" class="text-decoration-none">&larr; All campaigns</a>
+
+    <div class="d-flex flex-wrap justify-content-between align-items-start gap-3 mt-3 mb-4">
+        <div>
+            <p class="eyebrow mb-2">Campaign overview</p>
+            <div class="d-flex flex-wrap align-items-center gap-2">
+                <h1 class="mb-0">@Model.Campaign.NhtsaId</h1>
+                <span class="badge rounded-pill bg-light text-dark">@Model.Campaign.Status</span>
+            </div>
+            <p class="text-muted mt-2 mb-1">@Model.Campaign.Description</p>
+            <span class="small text-muted">@Model.Campaign.AffectedComponent &middot; @Model.Campaign.Severity severity</span>
+        </div>
+        <div class="d-flex flex-wrap gap-2">
+            <a asp-page="/Manager/VinImport" asp-route-campaignId="@Model.Campaign.NhtsaId" class="btn btn-outline-primary">VIN import results</a>
+            <a asp-page="/Manager/Notifications" asp-route-campaignId="@Model.Campaign.NhtsaId" class="btn btn-primary">Send notifications</a>
+        </div>
+    </div>
+
+    <div class="row g-3 mb-4">
+        <div class="col-sm-6 col-xl-3">
+            <div class="card h-100"><div class="card-body">
+                <p class="text-muted mb-1">Affected VINs</p><h2 class="mb-0">@Model.Campaign.AffectedVins.ToString("N0")</h2>
+            </div></div>
+        </div>
+        <div class="col-sm-6 col-xl-3">
+            <div class="card h-100"><div class="card-body">
+                <p class="text-muted mb-1">Customers</p><h2 class="mb-0">@Model.Campaign.Users.Count</h2>
+            </div></div>
+        </div>
+        <div class="col-sm-6 col-xl-3">
+            <div class="card h-100"><div class="card-body">
+                <p class="text-muted mb-1">Appointments booked</p><h2 class="mb-0">@Model.BookedAppointments</h2>
+            </div></div>
+        </div>
+        <div class="col-sm-6 col-xl-3">
+            <div class="card h-100"><div class="card-body">
+                <p class="text-muted mb-1">Vehicles repaired</p><h2 class="mb-0">@Model.RepairedVehicles</h2>
+            </div></div>
+        </div>
+    </div>
+
+    <section aria-labelledby="campaign-users-heading">
+        <div class="d-flex flex-wrap justify-content-between align-items-end gap-2 mb-3">
+            <div>
+                <h2 id="campaign-users-heading" class="h4 mb-1">Affected customers</h2>
+                <p class="text-muted mb-0">Appointment and repair progress for this campaign.</p>
+            </div>
+            <span class="small text-muted">@Model.Users.Count shown</span>
+        </div>
+
+        <form method="get" asp-route-campaignId="@Model.Campaign.NhtsaId" class="card shadow-sm mb-3">
+            <div class="card-body">
+                <div class="row g-3 align-items-end">
+                    <div class="col-md-5">
+                        <label asp-for="Search" class="form-label">Search</label>
+                        <input asp-for="Search" class="form-control" placeholder="Customer, email, or VIN" />
+                    </div>
+                    <div class="col-md-2">
+                        <label asp-for="AppointmentStatus" class="form-label">Appointment</label>
+                        <select asp-for="AppointmentStatus" class="form-select">
+                            <option value="">All</option>
+                            <option value="booked">Booked</option>
+                            <option value="not-booked">Not booked</option>
+                        </select>
+                    </div>
+                    <div class="col-md-2">
+                        <label asp-for="RepairStatus" class="form-label">Repair</label>
+                        <select asp-for="RepairStatus" class="form-select">
+                            <option value="">All</option>
+                            <option value="repaired">Repaired</option>
+                            <option value="not-repaired">Not repaired</option>
+                        </select>
+                    </div>
+                    <div class="col-md-2">
+                        <label asp-for="Sort" class="form-label">Sort by</label>
+                        <select asp-for="Sort" class="form-select">
+                            <option value="customer">Customer</option>
+                            <option value="vin">VIN</option>
+                            <option value="appointment">Appointment</option>
+                            <option value="repair">Repair status</option>
+                        </select>
+                    </div>
+                    <div class="col-md-1 d-flex gap-2">
+                        <button type="submit" class="btn btn-primary">Filter</button>
+                    </div>
+                </div>
+            </div>
+        </form>
+
+        <div class="table-responsive border rounded">
+            <table class="table table-hover align-middle mb-0">
+                <thead class="table-light">
+                    <tr><th>Customer</th><th>Email</th><th>VIN</th><th>Appointment</th><th>Repair status</th></tr>
+                </thead>
+                <tbody>
+                    @if (Model.Users.Count == 0)
+                    {
+                        <tr><td colspan="5" class="text-center text-muted py-4">No affected customers match these filters.</td></tr>
+                    }
+                    else
+                    {
+                        @foreach (var user in Model.Users)
+                        {
+                            <tr>
+                                <td class="fw-semibold">@user.CustomerName</td>
+                                <td>@user.Email</td>
+                                <td class="font-monospace">@user.Vin</td>
+                                <td><span class="badge rounded-pill @(user.AppointmentBooked ? "bg-success" : "bg-secondary")">@user.AppointmentStatus</span></td>
+                                <td><span class="badge rounded-pill @(user.RepairCompleted ? "bg-success" : "bg-warning text-dark")">@user.RepairStatus</span></td>
+                            </tr>
+                        }
+                    }
+                </tbody>
+            </table>
+        </div>
+    </section>
+</div>

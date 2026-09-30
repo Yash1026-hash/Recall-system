@@ -49,9 +49,9 @@ public class LoginModel : PageModel
                 return Page();
             }
 
-            var user = await response.Content.ReadFromJsonAsync<UserAccount>();
+            var login = await response.Content.ReadFromJsonAsync<LoginResponse>();
 
-            if (user is null)
+            if (login is null)
             {
                 ErrorMessage = "Login failed.";
                 return Page();
@@ -59,8 +59,9 @@ public class LoginModel : PageModel
 
             var claims = new List<Claim>
             {
-                new(ClaimTypes.Name, user.Username),
-                new(ClaimTypes.Role, user.Role)
+                new(ClaimTypes.Name, login.Username),
+                new(ClaimTypes.Role, login.Role),
+                new("access_token", login.AccessToken)
             };
 
             var identity = new ClaimsIdentity(
@@ -76,7 +77,7 @@ public class LoginModel : PageModel
                 return Redirect(ReturnUrl);
             }
 
-            return RedirectToPage($"/{user.Role}/Dashboard");
+            return RedirectToPage($"/{login.Role}/Dashboard");
         }
         catch
         {

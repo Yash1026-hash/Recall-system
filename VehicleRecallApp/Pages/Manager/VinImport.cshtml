@@ -6,16 +6,34 @@
 }
 
 <div class="container py-4">
-    <a asp-page="/Manager/Campaigns" class="text-decoration-none">
-        ← Back to Campaigns
+    <a asp-page="/Manager/CampaignOverview" asp-route-campaignId="@Model.CampaignId" class="text-decoration-none">
+        ← Back to Campaign
     </a>
 
     <div class="mt-3 mb-4">
-        <h1>VIN Import Results</h1>
+        <h1>VIN Import</h1>
         <p class="text-muted mb-0">
-            Campaign: <strong>@Model.CampaignId</strong>
+            Campaign: <strong>@Model.CampaignId</strong>. Upload this campaign's affected-customer CSV or review its latest import results.
         </p>
     </div>
+
+    @if (TempData["SuccessMessage"] is string successMessage)
+    {
+        <div class="alert alert-success" role="status">@successMessage</div>
+    }
+
+    <form method="post" enctype="multipart/form-data" asp-route-campaignId="@Model.CampaignId" class="card shadow-sm mb-4">
+        <div class="card-body">
+            <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
+            <label asp-for="CsvFile" class="form-label">Customer and VIN CSV</label>
+            <div class="d-flex flex-wrap gap-2">
+                <input asp-for="CsvFile" class="form-control" type="file" accept=".csv,text/csv" />
+                <button type="submit" class="btn btn-primary">Import VINs</button>
+            </div>
+            <span asp-validation-for="CsvFile" class="text-danger"></span>
+            <div class="form-text">CSV headers must include FullName, Email, and VIN.</div>
+        </div>
+    </form>
 
     <div class="row g-3 mb-4">
         <div class="col-md-4">
@@ -80,6 +98,10 @@
             </div>
         </div>
     }
+    else if (Model.TotalRecords == 0)
+    {
+        <p class="text-muted">No VIN import has been run for this campaign yet.</p>
+    }
 </div>
 
 @section Scripts {
@@ -99,4 +121,5 @@
             URL.revokeObjectURL(link.href);
         });
     </script>
+    <partial name="_ValidationScriptsPartial" />
 }

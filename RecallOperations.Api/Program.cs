@@ -1,10 +1,74 @@
+using System.Security.Claims;
+using System.Text;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Identity;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.IdentityModel.Tokens;
+using Microsoft.OpenApi;
+using RecallOperations.Api.Data;
+using RecallOperations.Api.Services;
+using Microsoft.AspNetCore.Diagnostics;
+
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddSwaggerGen();
-builder.Services.AddAuthorization();
-builder.Services.AddSingleton<RecallOperations.Api.Services.UserStore>();
+builder.Services.AddSwaggerGen(options =>
+{
+    options.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
+    {
+        Description = "Enter the access token returned by POST /api/Users/login.",
+        Name = "Authorization",
+        In = ParameterLocation.Header,
+        Type = SecuritySchemeType.Http,
+        Scheme = "bearer",
+        BearerFormat = "JWT"
+    });
+
+    options.AddSecurityRequirement(document => new OpenApiSecurityRequirement
+    {
+        [new OpenApiSecuritySchemeReference("Bearer", document)] = []
+    });
+});
+
+var jwtIssuer = builder.Configuration["Jwt:Issuer"] ?? "RecallOperations.Api";
+var jwtAudience = builder.Configuration["Jwt:Audience"] ?? "VehicleRecallApp";
+var jwtSigningKey = builder.Configuration["Jwt:SigningKey"]
+    ?? throw new InvalidOperationException("Configure Jwt:SigningKey with .NET User Secrets.");
+var jwtKeyBytes = Encoding.UTF8.GetBytes(jwtSigningKey);
+
+if (jwtKeyBytes.Length < 32)
+{
+    throw new InvalidOperationException("Jwt:SigningKey must be at least 32 bytes long.");
+}
+
+builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+    .AddJwtBearer(options =>
+    {
+        options.TokenValidationParameters = new TokenValidationParameters
+        {
+            ValidateIssuerSigningKey = true,
+            IssuerSigningKey = new SymmetricSecurityKey(jwtKeyBytes),
+            ValidateIssuer = true,
+            ValidIssuer = jwtIssuer,
+            ValidateAudience = true,
+            ValidAudience = jwtAudience,
+            ValidateLifetime = true,
+            NameClaimType = ClaimTypes.Name,
+            RoleClaimType = ClaimTypes.Role,
+            ClockSkew = TimeSpan.FromSeconds(30)
+        };
+    });
+
+builder.Services.AddAuthorization(options =>
+    options.AddPolicy("ManagerOnly", policy => policy.RequireRole("Manager")));
+
+builder.Services.AddDbContext<UserDbContext>(options =>
+    options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
+
+builder.Services.AddScoped<UserStore>();
+builder.Services.AddSingleton<JwtTokenService>();
+builder.Services.AddScoped<IPasswordHasher<VehicleRecall.Shared.Models.UserAccount>, PasswordHasher<VehicleRecall.Shared.Models.UserAccount>>();
 
 builder.Services.AddCors(options =>
 {
@@ -26,25 +90,24 @@ app.UseSwaggerUI(c =>
 });
 
 app.UseCors("FrontendPolicy");
-if (!app.Environment.IsDevelopment())
+app.UseExceptionHandler(exceptionHandlerApp =>
 {
-    app.UseHttpsRedirection();
-}
-app.UseAuthorization();
-
-app.MapGet("/", () => Results.Ok(new
-{
-    service = "Recall Operations API",
-    status = "running",
-    endpoints = new[]
+    exceptionHandlerApp.Run(async context =>
     {
-        "/api/vehicles",
-        "/api/vehicles/{vin}",
-        "/api/users",
-        "/api/users/login",
-        "/swagger"
-    }
-}));
+        var exception = context.Features.Get<Microsoft.AspNetCore.Diagnostics.IExceptionHandlerFeature>()?.Error;
+
+        context.Response.StatusCode = StatusCodes.Status500InternalServerError;
+        context.Response.ContentType = "application/json";
+
+        await context.Response.WriteAsJsonAsync(new
+        {
+            message = "An unexpected server error occurred.",
+            details = exception?.Message
+        });
+    });
+});
+app.UseAuthentication();
+app.UseAuthorization();
 
 app.MapControllers();
 

@@ -1,0 +1,144 @@
+@page
+@model VehicleRecallApp.Pages.Manager.ControlRoomModel
+
+@{
+    ViewData["Title"] = "Manager Control Room";
+}
+
+<div class="container py-4">
+    <div class="d-flex flex-wrap justify-content-between align-items-end gap-3 mb-4">
+        <div>
+            <a asp-page="/Manager/Dashboard" class="text-decoration-none">&larr; Manager overview</a>
+            <p class="eyebrow mt-3 mb-2">Access administration</p>
+            <h1 class="mb-1">Manager Control Room</h1>
+            <p class="text-muted mb-0">Registered accounts, roles, and staff access.</p>
+        </div>
+        <a asp-page="/Manager/Campaigns" class="btn btn-outline-primary">Campaigns</a>
+    </div>
+
+    @if (TempData["SuccessMessage"] is string successMessage)
+    {
+        <div class="alert alert-success" role="status">@successMessage</div>
+    }
+    @if (TempData["ErrorMessage"] is string errorMessage)
+    {
+        <div class="alert alert-danger" role="alert">@errorMessage</div>
+    }
+    @if (Model.ErrorMessage is not null)
+    {
+        <div class="alert alert-danger" role="alert">@Model.ErrorMessage</div>
+    }
+
+    <section class="mb-5" aria-labelledby="users-heading">
+        <div class="d-flex flex-wrap justify-content-between align-items-end gap-3 mb-3">
+            <div>
+                <h2 id="users-heading" class="h4 mb-1">Registered users</h2>
+                <p class="text-muted mb-0">@Model.Users.Count accounts in this result.</p>
+            </div>
+            <form method="get" class="row g-2 align-items-end">
+                <div class="col-auto">
+                    <label asp-for="Search" class="form-label">Search</label>
+                    <input asp-for="Search" class="form-control" placeholder="Name, email, username" />
+                </div>
+                <div class="col-auto">
+                    <label asp-for="Role" class="form-label">Role</label>
+                    <select asp-for="Role" class="form-select">
+                        <option value="">All roles</option>
+                        <option value="Customer">Customer</option>
+                        <option value="Technician">Technician</option>
+                        <option value="Manager">Manager</option>
+                    </select>
+                </div>
+                <div class="col-auto d-flex gap-2">
+                    <button type="submit" class="btn btn-primary">Filter</button>
+                    <a asp-page="/Manager/ControlRoom" class="btn btn-outline-secondary">Reset</a>
+                </div>
+            </form>
+        </div>
+
+        <div class="table-responsive border rounded">
+            <table class="table table-hover align-middle mb-0">
+                <thead class="table-light">
+                    <tr><th>Username</th><th>Name</th><th>Email</th><th>Role</th><th>Registration</th><th>Change role</th></tr>
+                </thead>
+                <tbody>
+                    @if (Model.Users.Count == 0)
+                    {
+                        <tr><td colspan="6" class="text-center text-muted py-4">No registered users found.</td></tr>
+                    }
+                    else
+                    {
+                        @foreach (var user in Model.Users)
+                        {
+                            <tr>
+                                <td class="fw-semibold">@user.Username</td>
+                                <td>@user.FullName</td>
+                                <td>@user.Email</td>
+                                <td>@user.Role</td>
+                                <td>@user.RegistrationStatus</td>
+                                <td>
+                                    <form method="post" asp-page-handler="Role" class="d-flex gap-2">
+                                        <input type="hidden" name="RoleChange.UserId" value="@user.UserId" />
+                                        <input type="hidden" name="Search" value="@Model.Search" />
+                                        <input type="hidden" name="Role" value="@Model.Role" />
+                                        <select name="RoleChange.Role" class="form-select form-select-sm" aria-label="New role for @user.Username">
+                                            <option value="Customer" selected="@(user.Role == "Customer")">Customer</option>
+                                            <option value="Technician" selected="@(user.Role == "Technician")">Technician</option>
+                                            <option value="Manager" selected="@(user.Role == "Manager")">Manager</option>
+                                        </select>
+                                        <button type="submit" class="btn btn-sm btn-outline-primary">Save</button>
+                                    </form>
+                                </td>
+                            </tr>
+                        }
+                    }
+                </tbody>
+            </table>
+        </div>
+    </section>
+
+    <section aria-labelledby="add-staff-heading">
+        <div class="mb-3">
+            <h2 id="add-staff-heading" class="h4 mb-1">Add staff account</h2>
+            <p class="text-muted mb-0">Create a registered manager or technician account.</p>
+        </div>
+        <form method="post" asp-page-handler="Create" class="card shadow-sm">
+            <div class="card-body">
+                <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
+                <div class="row g-3">
+                    <div class="col-md-6 col-xl-3">
+                        <label asp-for="StaffInput.FullName" class="form-label"></label>
+                        <input asp-for="StaffInput.FullName" class="form-control" />
+                        <span asp-validation-for="StaffInput.FullName" class="text-danger"></span>
+                    </div>
+                    <div class="col-md-6 col-xl-2">
+                        <label asp-for="StaffInput.Username" class="form-label"></label>
+                        <input asp-for="StaffInput.Username" class="form-control" />
+                        <span asp-validation-for="StaffInput.Username" class="text-danger"></span>
+                    </div>
+                    <div class="col-md-6 col-xl-3">
+                        <label asp-for="StaffInput.Email" class="form-label"></label>
+                        <input asp-for="StaffInput.Email" class="form-control" type="email" />
+                        <span asp-validation-for="StaffInput.Email" class="text-danger"></span>
+                    </div>
+                    <div class="col-md-6 col-xl-2">
+                        <label asp-for="StaffInput.Role" class="form-label"></label>
+                        <select asp-for="StaffInput.Role" class="form-select">
+                            <option value="Technician">Technician</option>
+                            <option value="Manager">Manager</option>
+                        </select>
+                        <span asp-validation-for="StaffInput.Role" class="text-danger"></span>
+                    </div>
+                    <div class="col-md-6 col-xl-2">
+                        <label asp-for="StaffInput.Password" class="form-label"></label>
+                        <input asp-for="StaffInput.Password" class="form-control" type="password" autocomplete="new-password" />
+                        <span asp-validation-for="StaffInput.Password" class="text-danger"></span>
+                    </div>
+                </div>
+                <div class="d-flex justify-content-end mt-3">
+                    <button type="submit" class="btn btn-primary">Create account</button>
+                </div>
+            </div>
+        </form>
+    </section>
+</div>

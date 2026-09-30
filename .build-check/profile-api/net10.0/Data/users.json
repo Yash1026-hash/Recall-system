@@ -1,0 +1,29 @@
+[
+  {
+    "UserId": 1,
+    "Username": "manager",
+    "Password": "manager123",
+    "Role": "Manager",
+    "FullName": "Alicia Morgan",
+    "Email": "manager@vehiclecompany.com",
+    "RegistrationStatus": "Registered"
+  },
+  {
+    "UserId": 2,
+    "Username": "cc1",
+    "Password": "Customer@123",
+    "Role": "Customer",
+    "FullName": "cs1",
+    "Email": "customer@example.com",
+    "RegistrationStatus": "Registered"
+  },
+  {
+    "UserId": 3,
+    "Username": "technician",
+    "Password": "technician123",
+    "Role": "Technician",
+    "FullName": "Priya Shah",
+    "Email": "technician@vehiclecompany.com",
+    "RegistrationStatus": "Registered"
+  }
+]

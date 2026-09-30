@@ -1,0 +1,11 @@
+Email,FullName,VIN,Make,Model,Year,RecallStatus
+arjun.sharma@example.com,Arjun Sharma,1HGCM82633A123456,Honda,Accord,2020,Open
+priya.reddy@example.com,Priya Reddy,5YFBURHE5FP123457,Toyota,Corolla,2019,Closed
+rahul.verma@example.com,Rahul Verma,1C4RJFAG5FC123458,Jeep,Grand Cherokee,2018,Open
+sneha.patel@example.com,Sneha Patel,3FA6P0H76KR123459,Ford,Fusion,2021,No Recall
+vikram.nair@example.com,Vikram Nair,JM1BL1SF8A1234560,Mazda,3,2022,Open
+ananya.rao@example.com,Ananya Rao,WVWZZZ3CZWE123461,Volkswagen,Jetta,2017,Closed
+rohit.kumar@example.com,Rohit Kumar,2T1BURHE7JC123462,Toyota,Camry,2020,No Recall
+meera.iyer@example.com,Meera Iyer,1N4AL3AP9HC123463,Nissan,Altima,2019,Open
+aditya.singh@example.com,Aditya Singh,SALWR2RV7JA123464,Land Rover,Range Rover,2021,Closed
+kavya.menon@example.com,Kavya Menon,KMHD84LF5KU123465,Hyundai,Elantra,2022,No Recall

@@ -18,10 +18,10 @@ public class ReportsModel : PageModel
 
     public void OnGet()
     {
-        var campaigns = _campaignStore.GetAll();
+        var summary = _campaignStore.GetSummary();
 
-        TotalCampaigns = campaigns.Count;
-        ActiveCampaigns = campaigns.Count(c => c.Status == "Active");
-        TotalAffectedVins = campaigns.Sum(c => c.AffectedVins);
+        TotalCampaigns = summary.TotalCampaigns;
+        ActiveCampaigns = summary.ActiveCampaigns;
+        TotalAffectedVins = summary.TotalAffectedVins;
     }
 }

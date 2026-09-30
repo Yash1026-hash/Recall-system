@@ -28,7 +28,10 @@ builder.Services.AddHttpClient("ApiClient", client =>
     client.BaseAddress = new Uri("http://localhost:5070");
     client.DefaultRequestHeaders.Accept.Add(
         new MediaTypeWithQualityHeaderValue("application/json"));
-});
+}).AddHttpMessageHandler<VehicleRecallApp.Services.BearerTokenForwardingHandler>();
+
+builder.Services.AddHttpContextAccessor();
+builder.Services.AddTransient<VehicleRecallApp.Services.BearerTokenForwardingHandler>();
 
 builder.Services.AddRazorPages(options =>
 {
@@ -40,6 +43,8 @@ builder.Services.AddRazorPages(options =>
     options.Conventions.AuthorizeFolder("/Technician", "TechnicianOnly");
 });
 builder.Services.AddSingleton<VehicleRecallApp.Services.InMemoryCampaignStore>();
+builder.Services.AddSingleton<VehicleRecallApp.Services.CampaignCsvImporter>();
+builder.Services.AddTransient<VehicleRecallApp.Services.CustomerRosterSyncService>();
 
 var app = builder.Build();
 

@@ -11,6 +11,7 @@ public class NotificationsModel : PageModel
     private readonly InMemoryCampaignStore _campaignStore;
 
     public List<RecallCampaign> Campaigns { get; private set; } = new();
+    public RecallCampaign? Campaign { get; private set; }
 
     [BindProperty]
     public NotificationInput Input { get; set; } = new();
@@ -20,14 +21,29 @@ public class NotificationsModel : PageModel
         _campaignStore = campaignStore;
     }
 
-    public void OnGet()
+    public IActionResult OnGet(string campaignId)
     {
         Campaigns = _campaignStore.GetAll();
+        Campaign = _campaignStore.GetById(campaignId);
+        if (Campaign is null)
+        {
+            return NotFound();
+        }
+
+        Input.CampaignId = Campaign.NhtsaId;
+        return Page();
     }
 
-    public IActionResult OnPost()
+    public IActionResult OnPost(string campaignId)
     {
         Campaigns = _campaignStore.GetAll();
+        Campaign = _campaignStore.GetById(campaignId);
+        if (Campaign is null)
+        {
+            return NotFound();
+        }
+
+        Input.CampaignId = Campaign.NhtsaId;
 
         if (!ModelState.IsValid)
         {
@@ -37,7 +53,7 @@ public class NotificationsModel : PageModel
         TempData["SuccessMessage"] =
             $"Notifications for campaign {Input.CampaignId} were queued successfully.";
 
-        return RedirectToPage();
+        return RedirectToPage(new { campaignId = Campaign.NhtsaId });
     }
 
     public class NotificationInput

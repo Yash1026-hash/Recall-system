@@ -9,14 +9,21 @@ namespace VehicleRecallApp.Pages.Manager;
 public class CreateCampaignModel : PageModel
 {
     private readonly InMemoryCampaignStore _campaignStore;
+    private readonly CampaignCsvImporter _csvImporter;
+    private readonly CustomerRosterSyncService _rosterSyncService;
 
-    public CreateCampaignModel(InMemoryCampaignStore campaignStore)
+    public CreateCampaignModel(
+        InMemoryCampaignStore campaignStore,
+        CampaignCsvImporter csvImporter,
+        CustomerRosterSyncService rosterSyncService)
     {
         _campaignStore = campaignStore;
+        _csvImporter = csvImporter;
+        _rosterSyncService = rosterSyncService;
     }
 
     [BindProperty]
-    public IFormFile? VinCsvFile { get; set; }
+    public IFormFile? CsvFile { get; set; }
 
     [BindProperty]
     public CampaignInput Input { get; set; } = new();
@@ -25,16 +32,15 @@ public class CreateCampaignModel : PageModel
     {
     }
 
-    public IActionResult OnPost()
+    public async Task<IActionResult> OnPostAsync()
     {
-        if (VinCsvFile is null || VinCsvFile.Length == 0)
+        if (CsvFile is null || CsvFile.Length == 0)
         {
-            ModelState.AddModelError("VinCsvFile", "Please upload a CSV file.");
+            ModelState.AddModelError(nameof(CsvFile), "Choose the affected-customer CSV file.");
         }
-        else if (!Path.GetExtension(VinCsvFile.FileName)
-                     .Equals(".csv", StringComparison.OrdinalIgnoreCase))
+        else if (!Path.GetExtension(CsvFile.FileName).Equals(".csv", StringComparison.OrdinalIgnoreCase))
         {
-            ModelState.AddModelError("VinCsvFile", "Only .csv files are allowed.");
+            ModelState.AddModelError(nameof(CsvFile), "Only CSV files are supported.");
         }
 
         if (!ModelState.IsValid)
@@ -55,12 +61,29 @@ public class CreateCampaignModel : PageModel
             AffectedVins = 0
         };
 
+        var importError = _csvImporter.Import(
+            campaign,
+            CsvFile!.OpenReadStream(),
+            out var importedCustomers);
+        if (importError is not null)
+        {
+            ModelState.AddModelError(nameof(CsvFile), importError);
+            return Page();
+        }
+
+        var rosterSyncError = await _rosterSyncService.SyncAsync(importedCustomers);
+        if (rosterSyncError is not null)
+        {
+            ModelState.AddModelError(nameof(CsvFile), rosterSyncError);
+            return Page();
+        }
+
         _campaignStore.Add(campaign);
 
         TempData["SuccessMessage"] =
-            $"Campaign {campaign.NhtsaId} was created successfully.";
+            $"Campaign {campaign.NhtsaId} was created. Imported {campaign.SuccessfulImports} VIN records; {campaign.FailedImports} need attention.";
 
-        return RedirectToPage("/Manager/Campaigns");
+        return RedirectToPage("/Manager/VinImport", new { campaignId = campaign.NhtsaId });
     }
 
     public class CampaignInput

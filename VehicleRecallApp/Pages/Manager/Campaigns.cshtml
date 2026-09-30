@@ -9,21 +9,11 @@
     <div class="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-4">
         <div>
             <h1 class="mb-1">Recall Campaigns</h1>
-            <p class="text-muted mb-0">Create and manage active safety recall campaigns.</p>
+            <p class="text-muted mb-0">Select a campaign to review its customers and repair progress.</p>
         </div>
 
         <div class="d-flex flex-wrap gap-2">
-            <a asp-page="/Manager/Reports" class="btn btn-outline-primary">
-                View Reports
-            </a>
-
-            <a asp-page="/Manager/Notifications" class="btn btn-outline-primary">
-                Notifications
-            </a>
-
-            <a asp-page="/Manager/VinImport" class="btn btn-outline-primary">
-                VIN Import Results
-            </a>
+            <a asp-page="/Manager/ControlRoom" class="btn btn-outline-primary">Manager Control Room</a>
 
             <a asp-page="/Manager/CreateCampaign" class="btn btn-primary">
                 Create Campaign
@@ -39,31 +29,41 @@
     }
 
     <div class="card app-card shadow-sm">
-        <div class="table-responsive">
-            <table class="table table-hover align-middle mb-0">
-                <thead class="table-light">
-                    <tr>
-                        <th scope="col">NHTSA ID</th>
-                        <th scope="col">Defect Summary</th>
-                        <th scope="col">Severity</th>
-                        <th scope="col">Affected VINs</th>
-                        <th scope="col">Status</th>
-                        
-                    </tr>
-                </thead>
-                <tbody>
-                    @foreach (var campaign in Model.Campaigns)
-                    {
-                        <tr>
-                            <td class="fw-semibold">@campaign.NhtsaId</td>
-                            <td>@campaign.Description</td>
-                            <td>@campaign.Severity</td>
-                            <td>@campaign.AffectedVins.ToString("N0")</td>
-                            <td>@campaign.Status</td>
-                        </tr>
-                    }
-                </tbody>
-            </table>
-        </div>
+        @if (Model.Campaigns.Count == 0)
+        {
+            <div class="p-4 text-muted">No campaigns have been created yet.</div>
+        }
+        else
+        {
+            @foreach (var campaign in Model.Campaigns)
+            {
+                     <a asp-page="/Manager/CampaignOverview"
+                         asp-route-campaignId="@campaign.NhtsaId"
+                         class="d-block border-bottom p-4 text-decoration-none text-reset campaign-list-item">
+                    <div class="row align-items-center g-3 mb-3">
+                        <div class="col-lg-6">
+                            <div class="d-flex align-items-center gap-2 mb-1">
+                                <span class="fw-bold text-primary">@campaign.NhtsaId</span>
+                                <span class="badge rounded-pill bg-light text-dark">@campaign.Status</span>
+                            </div>
+                            <h2 class="h5 mb-1">@campaign.Description</h2>
+                            <p class="text-muted mb-0">@campaign.AffectedComponent</p>
+                        </div>
+
+                        <div class="col-lg-3">
+                            <div class="text-muted small">Severity</div>
+                            <div class="fw-semibold">@campaign.Severity</div>
+                        </div>
+
+                        <div class="col-lg-3 text-lg-end">
+                            <div class="text-muted small">Affected VINs</div>
+                            <div class="fw-semibold">@campaign.AffectedVins.ToString("N0")</div>
+                        </div>
+                    </div>
+
+                    <div class="small text-muted">@campaign.Users.Count affected customers · @campaign.AffectedVins.ToString("N0") affected VINs</div>
+                </a>
+            }
+        }
     </div>
 </div>
