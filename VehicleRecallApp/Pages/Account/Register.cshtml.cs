@@ -17,8 +17,6 @@ public class RegisterModel : PageModel
     [BindProperty]
     public RegisterRequest Registration { get; set; } = new();
 
-    public string? ErrorMessage { get; private set; }
-
     public bool RegistrationComplete { get; private set; }
 
     public async Task<IActionResult> OnPostAsync()
@@ -38,13 +36,51 @@ public class RegisterModel : PageModel
 
             if (!response.IsSuccessStatusCode)
             {
-                ErrorMessage = response.StatusCode switch
+                if (response.StatusCode == System.Net.HttpStatusCode.Conflict)
                 {
-                    System.Net.HttpStatusCode.Conflict =>
-                        "That username or email address is already in use.",
-                    _ =>
-                        "Registration could not be completed."
-                };
+                    ModelState.AddModelError(
+                        string.Empty,
+                        "That username or email address is already in use.");
+                }
+                else if (response.StatusCode == System.Net.HttpStatusCode.BadRequest)
+                {
+                    var validationProblem =
+                        await response.Content.ReadFromJsonAsync<ValidationProblemDetails>();
+
+                    if (validationProblem?.Errors.Count > 0)
+                    {
+                        foreach (var (key, errors) in validationProblem.Errors)
+                        {
+                            var modelStateKey = key switch
+                            {
+                                "Email" or "Registration.Email" => "Registration.Email",
+                                "Username" or "Registration.Username" => "Registration.Username",
+                                "FullName" or "Registration.FullName" => "Registration.FullName",
+                                "Password" or "Registration.Password" => "Registration.Password",
+                                "ConfirmPassword" or "Registration.ConfirmPassword" =>
+                                    "Registration.ConfirmPassword",
+                                _ => string.Empty
+                            };
+
+                            foreach (var error in errors)
+                            {
+                                ModelState.AddModelError(modelStateKey, error);
+                            }
+                        }
+                    }
+                    else
+                    {
+                        ModelState.AddModelError(
+                            string.Empty,
+                            "Registration details were rejected. Check the form and try again.");
+                    }
+                }
+                else
+                {
+                    ModelState.AddModelError(
+                        string.Empty,
+                        "Registration could not be completed. Please try again.");
+                }
 
                 return Page();
             }
@@ -53,9 +89,18 @@ public class RegisterModel : PageModel
             Registration = new RegisterRequest();
             return Page();
         }
-        catch
+        catch (HttpRequestException)
         {
-            ErrorMessage = "Could not connect to the API server.";
+            ModelState.AddModelError(
+                string.Empty,
+                "Could not connect to the API server. Please try again.");
+            return Page();
+        }
+        catch (TaskCanceledException)
+        {
+            ModelState.AddModelError(
+                string.Empty,
+                "The API request timed out. Please try again.");
             return Page();
         }
     }

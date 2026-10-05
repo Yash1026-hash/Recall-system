@@ -54,8 +54,143 @@
         </div>
     </div>
 
+    <div class="row g-4 mt-2">
+        <!-- 1) Total vehicles by recall status -->
+        <div class="col-lg-6">
+            <div class="card h-100 shadow-sm">
+                <div class="card-header bg-white py-3">
+                    <h5 class="mb-0">Vehicles by Recall Status</h5>
+                    <small class="text-muted">Stored Procedure: <code>dbo.usp_TotalVehiclesByRecallStatus</code></small>
+                </div>
+                <div class="card-body p-0">
+                    @if (Model.AggregatedReports.VehiclesByStatus.Count > 0)
+                    {
+                        <div class="table-responsive">
+                            <table class="table table-hover align-middle mb-0">
+                                <thead class="table-light"><tr><th>Recall Status</th><th class="text-end">Total Vehicles</th></tr></thead>
+                                <tbody>
+                                    @foreach (var item in Model.AggregatedReports.VehiclesByStatus)
+                                    {
+                                        <tr>
+                                            <td><span class="badge @(item.RecallStatus == "Closed" ? "bg-success" : (item.RecallStatus == "Open" ? "bg-warning text-dark" : "bg-secondary"))">@item.RecallStatus</span></td>
+                                            <td class="text-end fw-semibold">@item.TotalVehicles.ToString("N0")</td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="p-3 text-muted small">No status records loaded. Make sure the database procedure is created.</div>
+                    }
+                </div>
+            </div>
+        </div>
+
+        <!-- 2) Total customers by city and state -->
+        <div class="col-lg-6">
+            <div class="card h-100 shadow-sm">
+                <div class="card-header bg-white py-3">
+                    <h5 class="mb-0">Customers by City &amp; State</h5>
+                    <small class="text-muted">Stored Procedure: <code>dbo.usp_CustomersByCityAndState</code></small>
+                </div>
+                <div class="card-body p-0">
+                    @if (Model.AggregatedReports.CustomersByCityState.Count > 0)
+                    {
+                        <div class="table-responsive" style="max-height: 240px; overflow-y: auto;">
+                            <table class="table table-hover align-middle mb-0">
+                                <thead class="table-light sticky-top"><tr><th>City</th><th>State</th><th class="text-end">Customers</th></tr></thead>
+                                <tbody>
+                                    @foreach (var item in Model.AggregatedReports.CustomersByCityState)
+                                    {
+                                        <tr>
+                                            <td>@(string.IsNullOrWhiteSpace(item.City) ? "Unknown" : item.City)</td>
+                                            <td>@(string.IsNullOrWhiteSpace(item.State) ? "Unknown" : item.State)</td>
+                                            <td class="text-end fw-semibold">@item.TotalCustomers.ToString("N0")</td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="p-3 text-muted small">No location records loaded. Make sure the database procedure is created.</div>
+                    }
+                </div>
+            </div>
+        </div>
+
+        <!-- 3) Total users by role -->
+        <div class="col-lg-6">
+            <div class="card h-100 shadow-sm">
+                <div class="card-header bg-white py-3">
+                    <h5 class="mb-0">Users by Role</h5>
+                    <small class="text-muted">Stored Procedure: <code>dbo.usp_UsersByRole</code></small>
+                </div>
+                <div class="card-body p-0">
+                    @if (Model.AggregatedReports.UsersByRole.Count > 0)
+                    {
+                        <div class="table-responsive">
+                            <table class="table table-hover align-middle mb-0">
+                                <thead class="table-light"><tr><th>Role</th><th class="text-end">Total Users</th></tr></thead>
+                                <tbody>
+                                    @foreach (var item in Model.AggregatedReports.UsersByRole)
+                                    {
+                                        <tr>
+                                            <td><span class="badge bg-primary-subtle text-primary border border-primary-subtle">@item.Role</span></td>
+                                            <td class="text-end fw-semibold">@item.TotalUsers.ToString("N0")</td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="p-3 text-muted small">No role records loaded. Make sure the database procedure is created.</div>
+                    }
+                </div>
+            </div>
+        </div>
+
+        <!-- 4) Total users by registration status -->
+        <div class="col-lg-6">
+            <div class="card h-100 shadow-sm">
+                <div class="card-header bg-white py-3">
+                    <h5 class="mb-0">Users by Registration Status</h5>
+                    <small class="text-muted">Stored Procedure: <code>dbo.usp_UsersByRegistrationStatus</code></small>
+                </div>
+                <div class="card-body p-0">
+                    @if (Model.AggregatedReports.UsersByRegistrationStatus.Count > 0)
+                    {
+                        <div class="table-responsive">
+                            <table class="table table-hover align-middle mb-0">
+                                <thead class="table-light"><tr><th>Registration Status</th><th class="text-end">Total Users</th></tr></thead>
+                                <tbody>
+                                    @foreach (var item in Model.AggregatedReports.UsersByRegistrationStatus)
+                                    {
+                                        <tr>
+                                            <td><span class="badge @(item.RegistrationStatus == "Registered" ? "bg-success" : "bg-warning text-dark")">@item.RegistrationStatus</span></td>
+                                            <td class="text-end fw-semibold">@item.TotalUsers.ToString("N0")</td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="p-3 text-muted small">No registration records loaded. Make sure the database procedure is created.</div>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+
     <div id="reportExportStatus" class="alert alert-info mt-4 mb-0" role="status">
-        Export a CSV snapshot of the summary shown above. Live remediation-rate reporting will be connected later.
+        Export a CSV snapshot of the compliance metrics and aggregated reports.
     </div>
 </div>
 

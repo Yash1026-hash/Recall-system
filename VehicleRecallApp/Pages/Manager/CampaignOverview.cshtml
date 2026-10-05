@@ -42,7 +42,14 @@
         </div>
         <div class="col-sm-6 col-xl-3">
             <div class="card h-100"><div class="card-body">
-                <p class="text-muted mb-1">Vehicles repaired</p><h2 class="mb-0">@Model.RepairedVehicles</h2>
+                <p class="text-muted mb-1">Vehicles done</p>
+                <h2 class="mb-0 text-success">
+                    @Model.Campaign.DoneVehicles / @Model.Campaign.TotalVehicles
+                </h2>
+                <div class="progress mt-2" style="height: 6px;">
+                    <div class="progress-bar bg-success" role="progressbar" style="width: @Model.Campaign.CompletionPercentage%" aria-valuenow="@Model.Campaign.CompletionPercentage" aria-valuemin="0" aria-valuemax="100"></div>
+                </div>
+                <small class="text-muted">@Model.Campaign.CompletionPercentage% completed</small>
             </div></div>
         </div>
     </div>

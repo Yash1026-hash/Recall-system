@@ -1,0 +1,91 @@
+<nav class="navbar navbar-expand-lg navbar-light bg-white border-bottom shadow-sm" aria-label="Main navigation">
+    <div class="container">
+        <a class="navbar-brand d-flex align-items-center gap-2" asp-area="" asp-page="/Index" aria-label="Recall Operations home">
+            <span class="brand-mark" aria-hidden="true">VR</span>
+            <span>Recall Operations</span>
+        </a>
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent" aria-controls="navbarSupportedContent"
+                aria-expanded="false" aria-label="Toggle navigation">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        <div id="navbarSupportedContent" class="navbar-collapse collapse">
+            <ul class="navbar-nav flex-grow-1">
+                <li class="nav-item">
+                    <a class="nav-link text-dark @(ViewContext.RouteData.Values["page"]?.ToString() == "/Index" ? "active" : "")"
+                       asp-area=""
+                       asp-page="/Index"
+                       aria-current="@(ViewContext.RouteData.Values["page"]?.ToString() == "/Index" ? "page" : null)">
+                        Home
+                    </a>
+                </li>
+
+                @if (User.IsInRole("Manager"))
+                {
+                    <li class="nav-item">
+                        <a class="nav-link text-dark @(ViewContext.RouteData.Values["page"]?.ToString() == "/Manager/Dashboard" ? "active" : "")"
+                           asp-page="/Manager/Dashboard"
+                           aria-current="@(ViewContext.RouteData.Values["page"]?.ToString() == "/Manager/Dashboard" ? "page" : null)">
+                            Manager Portal
+                        </a>
+                    </li>
+                }
+
+                @if (User.IsInRole("Customer"))
+                {
+                    <li class="nav-item">
+                        <a class="nav-link text-dark @(ViewContext.RouteData.Values["page"]?.ToString() == "/Customer/Dashboard" ? "active" : "")"
+                           asp-page="/Customer/Dashboard"
+                           aria-current="@(ViewContext.RouteData.Values["page"]?.ToString() == "/Customer/Dashboard" ? "page" : null)">
+                            Customer Portal
+                        </a>
+                    </li>
+                }
+
+                @if (User.IsInRole("Technician"))
+                {
+                    <li class="nav-item">
+                        <a class="nav-link text-dark @(ViewContext.RouteData.Values["page"]?.ToString() == "/Technician/Dashboard" ? "active" : "")"
+                           asp-page="/Technician/Dashboard"
+                           aria-current="@(ViewContext.RouteData.Values["page"]?.ToString() == "/Technician/Dashboard" ? "page" : null)">
+                            Technician Portal
+                        </a>
+                    </li>
+                }
+
+                <li class="nav-item">
+                    <a class="nav-link text-dark" asp-area="" asp-page="/Privacy">Privacy</a>
+                </li>
+
+                @if (User.Identity?.IsAuthenticated == true)
+                {
+                    <li class="nav-item ms-lg-auto d-flex align-items-center gap-2 px-2 py-2">
+                        <span class="user-name">@User.Identity.Name</span>
+                        @if (User.IsInRole("Manager"))
+                        {
+                            <span class="badge rounded-pill text-bg-primary">Manager</span>
+                        }
+                        else if (User.IsInRole("Technician"))
+                        {
+                            <span class="badge rounded-pill text-bg-info">Technician</span>
+                        }
+                        else if (User.IsInRole("Customer"))
+                        {
+                            <span class="badge rounded-pill text-bg-secondary">Customer</span>
+                        }
+                    </li>
+                    <li class="nav-item">
+                        <form method="post" asp-page="/Account/Login" asp-page-handler="Logout" class="d-lg-flex">
+                            <button type="submit" class="nav-link btn btn-link">Sign out</button>
+                        </form>
+                    </li>
+                }
+                else
+                {
+                    <li class="nav-item ms-lg-auto">
+                        <a class="nav-link text-dark" asp-page="/Account/Login">Sign in</a>
+                    </li>
+                }
+            </ul>
+        </div>
+    </div>
+</nav>

@@ -1,0 +1,153 @@
+@page "/Users/Details/{id:int}"
+@model VehicleRecallApp.Pages.Users.DetailsModel
+
+@{
+    ViewData["Title"] = Model.UserDetails != null
+        ? $"User Details - {Model.UserDetails.Username}"
+        : "User Details";
+}
+
+<div class="container py-4">
+    <div class="mb-4">
+        <a asp-page="/Manager/ControlRoom" class="text-decoration-none">&larr; Back to Manager Control Room</a>
+    </div>
+
+    @if (TempData["SuccessMessage"] is string successMessage)
+    {
+        <partial name="_AlertMessage" model='new AlertMessageModel(successMessage, "success")' />
+    }
+
+    @if (Model.ErrorMessage is not null)
+    {
+        <partial name="_AlertMessage" model='new AlertMessageModel(Model.ErrorMessage, "danger")' />
+    }
+
+    @if (Model.UserDetails is not null)
+    {
+        <div class="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-4 pb-3 border-bottom">
+            <div>
+                <h1 class="h2 mb-3">User Details</h1>
+                <partial name="_UserSummary" model="Model.UserDetails" />
+            </div>
+            <div class="d-flex gap-2">
+                <a asp-page="/Manager/ControlRoom" class="btn btn-outline-secondary">Control Room</a>
+                <a asp-page="/Users/Edit" asp-route-id="@Model.UserDetails.UserId" class="btn btn-outline-primary">Edit user</a>
+                <a asp-page="/Users/Delete" asp-route-id="@Model.UserDetails.UserId" class="btn btn-outline-danger">Delete user</a>
+            </div>
+        </div>
+
+        <div class="row g-4">
+            <!-- Login Information -->
+            <div class="col-md-6 col-lg-4">
+                <div class="card h-100 shadow-sm border-0 bg-light">
+                    <div class="card-body">
+                        <div class="d-flex align-items-center gap-2 mb-3">
+                            <span class="p-2 rounded bg-primary text-white d-inline-flex align-items-center justify-content-center" style="width: 36px; height: 36px;">
+                                &#128274;
+                            </span>
+                            <h2 class="h5 mb-0">Login Information</h2>
+                        </div>
+                        <ul class="list-group list-group-flush bg-transparent">
+                            <li class="list-group-item bg-transparent px-0 py-2">
+                                <span class="text-muted small d-block">Username</span>
+                                <strong class="fs-6">@Model.UserDetails.Username</strong>
+                            </li>
+                            <li class="list-group-item bg-transparent px-0 py-2">
+                                <span class="text-muted small d-block">Email Address</span>
+                                <a href="mailto:@Model.UserDetails.Email" class="text-decoration-none">@Model.UserDetails.Email</a>
+                            </li>
+                            <li class="list-group-item bg-transparent px-0 py-2">
+                                <span class="text-muted small d-block">System User ID</span>
+                                <span>#@Model.UserDetails.UserId</span>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Profile Information -->
+            <div class="col-md-6 col-lg-4">
+                <div class="card h-100 shadow-sm border-0 bg-light">
+                    <div class="card-body">
+                        <div class="d-flex align-items-center gap-2 mb-3">
+                            <span class="p-2 rounded bg-info text-white d-inline-flex align-items-center justify-content-center" style="width: 36px; height: 36px;">
+                                &#128100;
+                            </span>
+                            <h2 class="h5 mb-0">Profile Information</h2>
+                        </div>
+                        <ul class="list-group list-group-flush bg-transparent">
+                            <li class="list-group-item bg-transparent px-0 py-2">
+                                <span class="text-muted small d-block">Full Name</span>
+                                <strong class="fs-6">@Model.UserDetails.FullName</strong>
+                            </li>
+                            <li class="list-group-item bg-transparent px-0 py-2">
+                                <span class="text-muted small d-block">Customer ID</span>
+                                <span>@(Model.UserDetails.CustomerId.HasValue ? $"#{Model.UserDetails.CustomerId.Value}" : "N/A (Staff Account)")</span>
+                            </li>
+                            <li class="list-group-item bg-transparent px-0 py-2">
+                                <span class="text-muted small d-block">Address</span>
+                                <span>
+                                    @if (!string.IsNullOrWhiteSpace(Model.UserDetails.Profile.Address))
+                                    {
+                                        @Model.UserDetails.Profile.Address<text>, </text>
+                                        @Model.UserDetails.Profile.City<text>, </text>
+                                        @Model.UserDetails.Profile.State<text> </text>
+                                        @Model.UserDetails.Profile.PostalCode
+                                    }
+                                    else
+                                    {
+                                        <span class="text-muted">Not specified</span>
+                                    }
+                                </span>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Department, Roles, Status & Created Date -->
+            <div class="col-md-12 col-lg-4">
+                <div class="card h-100 shadow-sm border-0 bg-light">
+                    <div class="card-body">
+                        <div class="d-flex align-items-center gap-2 mb-3">
+                            <span class="p-2 rounded bg-success text-white d-inline-flex align-items-center justify-content-center" style="width: 36px; height: 36px;">
+                                &#128188;
+                            </span>
+                            <h2 class="h5 mb-0">Organization & Roles</h2>
+                        </div>
+                        <ul class="list-group list-group-flush bg-transparent">
+                            <li class="list-group-item bg-transparent px-0 py-2">
+                                <span class="text-muted small d-block">Department</span>
+                                <a asp-page="/Manager/DepartmentDetails" asp-route-id="@Model.UserDetails.DepartmentId" class="badge bg-secondary fs-6 fw-normal text-decoration-none">@Model.UserDetails.Department</a>
+                            </li>
+                            <li class="list-group-item bg-transparent px-0 py-2">
+                                <span class="text-muted small d-block mb-1">Roles</span>
+                                <div>
+                                    @if (Model.UserDetails.Roles.Count > 0)
+                                    {
+                                        @foreach (var role in Model.UserDetails.Roles)
+                                        {
+                                            <span class="badge bg-primary me-1">@role.Name</span>
+                                        }
+                                    }
+                                    else
+                                    {
+                                        <span class="badge bg-primary">@Model.UserDetails.Role</span>
+                                    }
+                                </div>
+                            </li>
+                            <li class="list-group-item bg-transparent px-0 py-2">
+                                <span class="text-muted small d-block mb-1">Account Status</span>
+                                <partial name="_UserStatus" model="Model.UserDetails" />
+                            </li>
+                            <li class="list-group-item bg-transparent px-0 py-2">
+                                <span class="text-muted small d-block">Created Date</span>
+                                <span>@(Model.UserDetails.CreatedDate?.ToString("MMMM dd, yyyy") ?? "Not recorded")</span>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
+</div>

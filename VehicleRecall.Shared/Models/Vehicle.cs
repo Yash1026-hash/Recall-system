@@ -13,4 +13,8 @@ public class Vehicle
     [JsonIgnore]
     public ICollection<RecallCustomerVehicle> CustomerVehicles { get; set; } =
         new List<RecallCustomerVehicle>();
+
+    [JsonIgnore]
+    public ICollection<CampaignVehicle> CampaignVehicles { get; set; } =
+        new List<CampaignVehicle>();
 }

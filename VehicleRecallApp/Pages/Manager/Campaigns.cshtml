@@ -41,7 +41,7 @@
                          asp-route-campaignId="@campaign.NhtsaId"
                          class="d-block border-bottom p-4 text-decoration-none text-reset campaign-list-item">
                     <div class="row align-items-center g-3 mb-3">
-                        <div class="col-lg-6">
+                        <div class="col-lg-5">
                             <div class="d-flex align-items-center gap-2 mb-1">
                                 <span class="fw-bold text-primary">@campaign.NhtsaId</span>
                                 <span class="badge rounded-pill bg-light text-dark">@campaign.Status</span>
@@ -50,14 +50,25 @@
                             <p class="text-muted mb-0">@campaign.AffectedComponent</p>
                         </div>
 
-                        <div class="col-lg-3">
+                        <div class="col-lg-2">
                             <div class="text-muted small">Severity</div>
                             <div class="fw-semibold">@campaign.Severity</div>
                         </div>
 
-                        <div class="col-lg-3 text-lg-end">
+                        <div class="col-lg-2">
                             <div class="text-muted small">Affected VINs</div>
                             <div class="fw-semibold">@campaign.AffectedVins.ToString("N0")</div>
+                        </div>
+
+                        <div class="col-lg-3 text-lg-end">
+                            <div class="text-muted small">Vehicles Done</div>
+                            <div class="fw-semibold text-success">
+                                @campaign.DoneVehicles / @campaign.TotalVehicles done
+                            </div>
+                            <div class="progress mt-1" style="height: 6px;">
+                                <div class="progress-bar bg-success" role="progressbar" style="width: @campaign.CompletionPercentage%" aria-valuenow="@campaign.CompletionPercentage" aria-valuemin="0" aria-valuemax="100"></div>
+                            </div>
+                            <small class="text-muted">@campaign.CompletionPercentage% completed</small>
                         </div>
                     </div>
 

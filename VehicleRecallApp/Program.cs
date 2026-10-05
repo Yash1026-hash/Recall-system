@@ -10,10 +10,10 @@ builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationSc
     .AddCookie(options =>
     {
         options.LoginPath = "/Account/Login";
-        options.AccessDeniedPath = "/Account/Login";
-            options.Cookie.Name = "VehicleRecall.Auth";
+        options.AccessDeniedPath = "/Account/AccessDenied";
+        options.Cookie.Name = "VehicleRecall.Auth";
         options.ExpireTimeSpan = TimeSpan.FromHours(8);
-        options.SlidingExpiration = true;
+        options.SlidingExpiration = false;
     });
 
 builder.Services.AddAuthorization(options =>
@@ -38,9 +38,11 @@ builder.Services.AddRazorPages(options =>
     options.Conventions.AllowAnonymousToPage("/Index");
     options.Conventions.AllowAnonymousToPage("/Privacy");
     options.Conventions.AllowAnonymousToPage("/Account/Login");
+    options.Conventions.AllowAnonymousToPage("/Account/AccessDenied");
     options.Conventions.AuthorizeFolder("/Manager", "ManagerOnly");
     options.Conventions.AuthorizeFolder("/Customer", "CustomerOnly");
     options.Conventions.AuthorizeFolder("/Technician", "TechnicianOnly");
+    options.Conventions.AuthorizeFolder("/Users", "ManagerOnly");
 });
 builder.Services.AddSingleton<VehicleRecallApp.Services.InMemoryCampaignStore>();
 builder.Services.AddSingleton<VehicleRecallApp.Services.CampaignCsvImporter>();

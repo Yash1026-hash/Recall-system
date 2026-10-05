@@ -1,0 +1,13 @@
+@model VehicleRecall.Shared.Models.UserSummaryResponse
+
+@{
+    var status = Model.IsActive ? "Active" : "Deactivated";
+    var statusClass = status switch
+    {
+        "Active" => "bg-success",
+        "Deactivated" => "bg-danger",
+        _ => "bg-secondary"
+    };
+}
+
+<span class="badge @statusClass">@status</span>

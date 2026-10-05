@@ -19,6 +19,14 @@ public class JwtTokenService(IConfiguration configuration)
         var credentials = new SigningCredentials(
             new SymmetricSecurityKey(Encoding.UTF8.GetBytes(key)),
             SecurityAlgorithms.HmacSha256);
+        var roles = user.UserRoles
+            .Select(userRole => userRole.Role.Name)
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .ToList();
+        if (roles.Count == 0)
+        {
+            roles.Add(user.Role);
+        }
 
         var token = new JwtSecurityToken(
             issuer: issuer,
@@ -27,7 +35,7 @@ public class JwtTokenService(IConfiguration configuration)
             [
                 new Claim(ClaimTypes.NameIdentifier, user.UserId.ToString()),
                 new Claim(ClaimTypes.Name, user.Username),
-                new Claim(ClaimTypes.Role, user.Role)
+                .. roles.Select(role => new Claim(ClaimTypes.Role, role))
             ],
             expires: expiresAt.UtcDateTime,
             signingCredentials: credentials);
@@ -39,6 +47,9 @@ public class JwtTokenService(IConfiguration configuration)
             user.FullName,
             user.Email,
             new JwtSecurityTokenHandler().WriteToken(token),
-            expiresAt);
+            expiresAt)
+        {
+            Roles = roles
+        };
     }
 }

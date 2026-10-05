@@ -11,7 +11,11 @@ public class UserAccount
     public string Role { get; set; } = string.Empty;
     public string FullName { get; set; } = string.Empty;
     public string Email { get; set; } = string.Empty;
+    public int DepartmentId { get; set; }
+    public Department Department { get; set; } = null!;
     public string RegistrationStatus { get; set; } = "Pending";
+    public bool IsActive { get; set; } = true;
+    public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
     public int? CustomerId { get; set; }
 
     [JsonIgnore]

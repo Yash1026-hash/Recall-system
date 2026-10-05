@@ -13,29 +13,33 @@
             <h1 class="mb-1">Manager Control Room</h1>
             <p class="text-muted mb-0">Registered accounts, roles, and staff access.</p>
         </div>
-        <a asp-page="/Manager/Campaigns" class="btn btn-outline-primary">Campaigns</a>
+        <div class="d-flex gap-2">
+            <a asp-page="/Manager/Departments" class="btn btn-outline-primary">Departments</a>
+            <a asp-page="/Manager/Campaigns" class="btn btn-outline-primary">Campaigns</a>
+        </div>
     </div>
 
     @if (TempData["SuccessMessage"] is string successMessage)
     {
-        <div class="alert alert-success" role="status">@successMessage</div>
+        <partial name="_AlertMessage" model='new AlertMessageModel(successMessage, "success")' />
     }
     @if (TempData["ErrorMessage"] is string errorMessage)
     {
-        <div class="alert alert-danger" role="alert">@errorMessage</div>
+        <partial name="_AlertMessage" model='new AlertMessageModel(errorMessage, "danger")' />
     }
     @if (Model.ErrorMessage is not null)
     {
-        <div class="alert alert-danger" role="alert">@Model.ErrorMessage</div>
+        <partial name="_AlertMessage" model='new AlertMessageModel(Model.ErrorMessage, "danger")' />
     }
 
     <section class="mb-5" aria-labelledby="users-heading">
         <div class="d-flex flex-wrap justify-content-between align-items-end gap-3 mb-3">
             <div>
-                <h2 id="users-heading" class="h4 mb-1">Registered users</h2>
+                <h2 id="users-heading" class="h4 mb-1">User accounts</h2>
                 <p class="text-muted mb-0">@Model.Users.Count accounts in this result.</p>
             </div>
-            <form method="get" class="row g-2 align-items-end">
+            <form method="get" asp-page="/Manager/ControlRoom" class="row g-2 align-items-end">
+                <input type="hidden" name="PageNumber" value="1" />
                 <div class="col-auto">
                     <label asp-for="Search" class="form-label">Search</label>
                     <input asp-for="Search" class="form-control" placeholder="Name, email, username" />
@@ -44,9 +48,36 @@
                     <label asp-for="Role" class="form-label">Role</label>
                     <select asp-for="Role" class="form-select">
                         <option value="">All roles</option>
-                        <option value="Customer">Customer</option>
-                        <option value="Technician">Technician</option>
-                        <option value="Manager">Manager</option>
+                        @foreach (var role in Model.AvailableRoles)
+                        {
+                            <option value="@role">@role</option>
+                        }
+                    </select>
+                </div>
+                <div class="col-auto">
+                    <label asp-for="DepartmentId" class="form-label">Department</label>
+                    <select asp-for="DepartmentId" class="form-select">
+                        <option value="">All departments</option>
+                        @foreach (var department in Model.Departments)
+                        {
+                            <option value="@department.DepartmentId">@department.Name</option>
+                        }
+                    </select>
+                </div>
+                <div class="col-auto">
+                    <label asp-for="IsActive" class="form-label">Account access</label>
+                    <select asp-for="IsActive" class="form-select">
+                        <option value="">All</option>
+                        <option value="true">Active</option>
+                        <option value="false">Deactivated</option>
+                    </select>
+                </div>
+                <div class="col-auto">
+                    <label asp-for="RegistrationStatus" class="form-label">Registration</label>
+                    <select asp-for="RegistrationStatus" class="form-select">
+                        <option value="">All</option>
+                        <option value="Registered">Registered</option>
+                        <option value="Pending">Pending</option>
                     </select>
                 </div>
                 <div class="col-auto d-flex gap-2">
@@ -59,35 +90,67 @@
         <div class="table-responsive border rounded">
             <table class="table table-hover align-middle mb-0">
                 <thead class="table-light">
-                    <tr><th>Username</th><th>Name</th><th>Email</th><th>Role</th><th>Registration</th><th>Change role</th></tr>
+                    <tr><th>Username</th><th>Name</th><th>Email</th><th>Department</th><th>Registration</th><th>Access</th><th>Roles</th><th>Actions</th></tr>
                 </thead>
                 <tbody>
                     @if (Model.Users.Count == 0)
                     {
-                        <tr><td colspan="6" class="text-center text-muted py-4">No registered users found.</td></tr>
+                        <tr><td colspan="8" class="text-center text-muted py-4">No users match these filters.</td></tr>
                     }
                     else
                     {
                         @foreach (var user in Model.Users)
                         {
                             <tr>
-                                <td class="fw-semibold">@user.Username</td>
+                                <td class="fw-semibold">
+                                    <a asp-page="/Users/Details" asp-route-id="@user.UserId" class="text-decoration-none">@user.Username</a>
+                                </td>
                                 <td>@user.FullName</td>
                                 <td>@user.Email</td>
-                                <td>@user.Role</td>
+                                <td>@user.Department</td>
                                 <td>@user.RegistrationStatus</td>
                                 <td>
-                                    <form method="post" asp-page-handler="Role" class="d-flex gap-2">
-                                        <input type="hidden" name="RoleChange.UserId" value="@user.UserId" />
-                                        <input type="hidden" name="Search" value="@Model.Search" />
-                                        <input type="hidden" name="Role" value="@Model.Role" />
-                                        <select name="RoleChange.Role" class="form-select form-select-sm" aria-label="New role for @user.Username">
-                                            <option value="Customer" selected="@(user.Role == "Customer")">Customer</option>
-                                            <option value="Technician" selected="@(user.Role == "Technician")">Technician</option>
-                                            <option value="Manager" selected="@(user.Role == "Manager")">Manager</option>
-                                        </select>
-                                        <button type="submit" class="btn btn-sm btn-outline-primary">Save</button>
+                                    <partial name="_UserStatus" model="user" />
+                                    <form method="post" asp-page="/Manager/ControlRoom" asp-page-handler="Status" class="d-flex">
+                                        <input type="hidden" name="AccountStatus.UserId" value="@user.UserId" />
+                                        <input type="hidden" name="AccountStatus.IsActive" value="@(!user.IsActive)" />
+                                        <input asp-for="Search" type="hidden" />
+                                        <input asp-for="Role" type="hidden" />
+                                        <input asp-for="DepartmentId" type="hidden" />
+                                        <input asp-for="IsActive" type="hidden" />
+                                        <input asp-for="RegistrationStatus" type="hidden" />
+                                        <input asp-for="PageNumber" type="hidden" />
+                                        <button type="submit" class="btn btn-sm @(user.IsActive ? "btn-outline-danger" : "btn-outline-success")">
+                                            @(user.IsActive ? "Deactivate" : "Activate")
+                                        </button>
                                     </form>
+                                </td>
+                                <td>
+                                    <form method="post" asp-page="/Manager/ControlRoom" asp-page-handler="Roles" class="d-flex flex-column gap-1">
+                                        <input type="hidden" name="RoleChange.UserId" value="@user.UserId" />
+                                        <input asp-for="Search" type="hidden" />
+                                        <input asp-for="Role" type="hidden" />
+                                        <input asp-for="DepartmentId" type="hidden" />
+                                        <input asp-for="IsActive" type="hidden" />
+                                        <input asp-for="RegistrationStatus" type="hidden" />
+                                        <input asp-for="PageNumber" type="hidden" />
+                                        @foreach (var role in Model.AvailableRoles)
+                                        {
+                                            <label class="form-check small mb-0">
+                                                <input class="form-check-input" type="checkbox" name="RoleChange.Roles" value="@role"
+                                                       checked="@(user.Roles.Any(userRole => userRole.Name == role))" />
+                                                <span class="form-check-label">@role</span>
+                                            </label>
+                                        }
+                                        <button type="submit" class="btn btn-sm btn-outline-primary mt-1">Save roles</button>
+                                    </form>
+                                </td>
+                                <td>
+                                    <div class="d-flex gap-2">
+                                        <a asp-page="/Users/Details" asp-route-id="@user.UserId" class="btn btn-sm btn-outline-secondary">Details</a>
+                                        <a asp-page="/Users/Edit" asp-route-id="@user.UserId" class="btn btn-sm btn-outline-primary">Edit</a>
+                                        <a asp-page="/Users/Delete" asp-route-id="@user.UserId" class="btn btn-sm btn-outline-danger">Delete</a>
+                                    </div>
                                 </td>
                             </tr>
                         }
@@ -95,6 +158,39 @@
                 </tbody>
             </table>
         </div>
+        <nav class="d-flex justify-content-between align-items-center mt-3" aria-label="User list pages">
+            @if (Model.PageNumber > 1)
+            {
+                <a asp-page="/Manager/ControlRoom"
+                   asp-route-search="@Model.Search"
+                   asp-route-role="@Model.Role"
+                   asp-route-departmentId="@Model.DepartmentId"
+                   asp-route-isActive="@Model.IsActive"
+                   asp-route-registrationStatus="@Model.RegistrationStatus"
+                   asp-route-pageNumber="@(Model.PageNumber - 1)"
+                   class="btn btn-outline-secondary">Previous</a>
+            }
+            else
+            {
+                <span></span>
+            }
+            <span class="small text-muted">Page @Model.PageNumber</span>
+            @if (Model.Users.Count == 100)
+            {
+                <a asp-page="/Manager/ControlRoom"
+                   asp-route-search="@Model.Search"
+                   asp-route-role="@Model.Role"
+                   asp-route-departmentId="@Model.DepartmentId"
+                   asp-route-isActive="@Model.IsActive"
+                   asp-route-registrationStatus="@Model.RegistrationStatus"
+                   asp-route-pageNumber="@(Model.PageNumber + 1)"
+                   class="btn btn-outline-secondary">Next</a>
+            }
+            else
+            {
+                <span></span>
+            }
+        </nav>
     </section>
 
     <section aria-labelledby="add-staff-heading">
@@ -102,11 +198,17 @@
             <h2 id="add-staff-heading" class="h4 mb-1">Add staff account</h2>
             <p class="text-muted mb-0">Create a registered manager or technician account.</p>
         </div>
-        <form method="post" asp-page-handler="Create" class="card shadow-sm">
+        <form method="post" asp-page="/Manager/ControlRoom" asp-page-handler="Create" class="card shadow-sm">
             <div class="card-body">
-                <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
+                <input asp-for="Search" type="hidden" />
+                <input asp-for="Role" type="hidden" />
+                <input asp-for="DepartmentId" type="hidden" />
+                <input asp-for="IsActive" type="hidden" />
+                <input asp-for="RegistrationStatus" type="hidden" />
+                <input asp-for="PageNumber" type="hidden" />
+                <partial name="_ValidationSummary" model="Model" />
                 <div class="row g-3">
-                    <div class="col-md-6 col-xl-3">
+                    <div class="col-md-6 col-xl-2">
                         <label asp-for="StaffInput.FullName" class="form-label"></label>
                         <input asp-for="StaffInput.FullName" class="form-control" />
                         <span asp-validation-for="StaffInput.FullName" class="text-danger"></span>
@@ -116,10 +218,21 @@
                         <input asp-for="StaffInput.Username" class="form-control" />
                         <span asp-validation-for="StaffInput.Username" class="text-danger"></span>
                     </div>
-                    <div class="col-md-6 col-xl-3">
+                    <div class="col-md-6 col-xl-2">
                         <label asp-for="StaffInput.Email" class="form-label"></label>
                         <input asp-for="StaffInput.Email" class="form-control" type="email" />
                         <span asp-validation-for="StaffInput.Email" class="text-danger"></span>
+                    </div>
+                    <div class="col-md-6 col-xl-2">
+                        <label asp-for="StaffInput.DepartmentId" class="form-label">Department</label>
+                        <select asp-for="StaffInput.DepartmentId" class="form-select" required>
+                            <option value="">Choose department</option>
+                            @foreach (var department in Model.Departments)
+                            {
+                                <option value="@department.DepartmentId">@department.Name</option>
+                            }
+                        </select>
+                        <span asp-validation-for="StaffInput.DepartmentId" class="text-danger"></span>
                     </div>
                     <div class="col-md-6 col-xl-2">
                         <label asp-for="StaffInput.Role" class="form-label"></label>

@@ -1,0 +1,41 @@
+@page "/Manager/Departments/Edit/{id:int}"
+@model VehicleRecallApp.Pages.Manager.EditDepartmentModel
+
+@{
+    ViewData["Title"] = "Edit Department";
+}
+
+<div class="container py-4">
+    <a asp-page="/Manager/DepartmentDetails" asp-route-id="@Model.Id" class="text-decoration-none">&larr; Back to department</a>
+    <h1 class="mt-3">Edit department</h1>
+
+    @if (Model.ErrorMessage is not null)
+    {
+        <partial name="_AlertMessage" model='new AlertMessageModel(Model.ErrorMessage, "danger")' />
+    }
+
+    @if (Model.Department is not null)
+    {
+        <form method="post" asp-page="/Manager/EditDepartment" asp-route-id="@Model.Id" class="card shadow-sm mt-4">
+            <div class="card-body p-4">
+                <partial name="_ValidationSummary" model="Model" />
+                <div class="mb-3">
+                    <label asp-for="Input.Name" class="form-label"></label>
+                    <input asp-for="Input.Name" class="form-control" />
+                    <span asp-validation-for="Input.Name" class="text-danger"></span>
+                </div>
+                <div class="mb-3">
+                    <label asp-for="Input.Description" class="form-label"></label>
+                    <textarea asp-for="Input.Description" class="form-control" rows="3"></textarea>
+                    <span asp-validation-for="Input.Description" class="text-danger"></span>
+                </div>
+                <button type="submit" class="btn btn-primary">Save changes</button>
+                <a asp-page="/Manager/Departments" class="btn btn-outline-secondary">Cancel</a>
+            </div>
+        </form>
+    }
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

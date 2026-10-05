@@ -85,6 +85,8 @@ public class VinImportModel : PageModel
                 LoadResults(campaign);
                 return Page();
             }
+
+            _campaignStore.Add(campaign);
         }
 
         TempData["SuccessMessage"] =

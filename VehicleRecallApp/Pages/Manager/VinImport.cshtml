@@ -24,7 +24,7 @@
 
     <form method="post" enctype="multipart/form-data" asp-route-campaignId="@Model.CampaignId" class="card shadow-sm mb-4">
         <div class="card-body">
-            <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
+            <partial name="_ValidationSummary" model="Model" />
             <label asp-for="CsvFile" class="form-label">Customer and VIN CSV</label>
             <div class="d-flex flex-wrap gap-2">
                 <input asp-for="CsvFile" class="form-control" type="file" accept=".csv,text/csv" />

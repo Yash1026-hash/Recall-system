@@ -22,6 +22,108 @@ namespace RecallOperations.Api.Migrations
 
             SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder);
 
+            modelBuilder.Entity("VehicleRecall.Shared.Models.CampaignVehicle", b =>
+                {
+                    b.Property<string>("CampaignId")
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
+                    b.Property<string>("Vin")
+                        .HasMaxLength(17)
+                        .HasColumnType("nvarchar(17)");
+
+                    b.Property<bool>("AppointmentBooked")
+                        .HasColumnType("bit");
+
+                    b.Property<bool>("RepairCompleted")
+                        .HasColumnType("bit");
+
+                    b.HasKey("CampaignId", "Vin");
+
+                    b.HasIndex("Vin");
+
+                    b.ToTable("KS_CampaignVehicles", "dbo");
+                });
+
+            modelBuilder.Entity("VehicleRecall.Shared.Models.Department", b =>
+                {
+                    b.Property<int>("DepartmentId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("DepartmentId"));
+
+                    b.Property<string>("Description")
+                        .IsRequired()
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.HasKey("DepartmentId");
+
+                    b.HasIndex("Name")
+                        .IsUnique();
+
+                    b.ToTable("KS_Departments", "dbo");
+                });
+
+            modelBuilder.Entity("VehicleRecall.Shared.Models.RecallCampaign", b =>
+                {
+                    b.Property<string>("NhtsaId")
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
+                    b.Property<string>("AffectedComponent")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<int>("AffectedVins")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("datetime2")
+                        .HasDefaultValueSql("getdate()");
+
+                    b.Property<string>("Description")
+                        .IsRequired()
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
+
+                    b.Property<int>("FailedImports")
+                        .HasColumnType("int");
+
+                    b.Property<int>("ImportedRecords")
+                        .HasColumnType("int");
+
+                    b.Property<string>("RemedyInstructions")
+                        .IsRequired()
+                        .HasMaxLength(1000)
+                        .HasColumnType("nvarchar(1000)");
+
+                    b.Property<string>("Severity")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
+                    b.Property<int>("SuccessfulImports")
+                        .HasColumnType("int");
+
+                    b.HasKey("NhtsaId");
+
+                    b.ToTable("KS_Campaigns", "dbo");
+                });
+
             modelBuilder.Entity("VehicleRecall.Shared.Models.RecallCustomer", b =>
                 {
                     b.Property<int>("CustomerId")
@@ -259,7 +361,15 @@ namespace RecallOperations.Api.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("UserId"));
 
+                    b.Property<DateTime>("CreatedAt")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("datetime2")
+                        .HasDefaultValueSql("getdate()");
+
                     b.Property<int?>("CustomerId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("DepartmentId")
                         .HasColumnType("int");
 
                     b.Property<string>("Email")
@@ -269,6 +379,11 @@ namespace RecallOperations.Api.Migrations
                     b.Property<string>("FullName")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
+
+                    b.Property<bool>("IsActive")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bit")
+                        .HasDefaultValue(true);
 
                     b.Property<string>("Password")
                         .IsRequired()
@@ -291,6 +406,8 @@ namespace RecallOperations.Api.Migrations
                     b.HasIndex("CustomerId")
                         .IsUnique()
                         .HasFilter("[CustomerId] IS NOT NULL");
+
+                    b.HasIndex("DepartmentId");
 
                     b.HasIndex("Username")
                         .IsUnique();
@@ -424,6 +541,25 @@ namespace RecallOperations.Api.Migrations
                         });
                 });
 
+            modelBuilder.Entity("VehicleRecall.Shared.Models.CampaignVehicle", b =>
+                {
+                    b.HasOne("VehicleRecall.Shared.Models.RecallCampaign", "Campaign")
+                        .WithMany("CampaignVehicles")
+                        .HasForeignKey("CampaignId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("VehicleRecall.Shared.Models.Vehicle", "Vehicle")
+                        .WithMany("CampaignVehicles")
+                        .HasForeignKey("Vin")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Campaign");
+
+                    b.Navigation("Vehicle");
+                });
+
             modelBuilder.Entity("VehicleRecall.Shared.Models.RecallCustomerVehicle", b =>
                 {
                     b.HasOne("VehicleRecall.Shared.Models.RecallCustomer", "Customer")
@@ -450,7 +586,15 @@ namespace RecallOperations.Api.Migrations
                         .HasForeignKey("VehicleRecall.Shared.Models.UserAccount", "CustomerId")
                         .OnDelete(DeleteBehavior.Restrict);
 
+                    b.HasOne("VehicleRecall.Shared.Models.Department", "Department")
+                        .WithMany("Users")
+                        .HasForeignKey("DepartmentId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
                     b.Navigation("Customer");
+
+                    b.Navigation("Department");
                 });
 
             modelBuilder.Entity("VehicleRecall.Shared.Models.UserRole", b =>
@@ -472,6 +616,16 @@ namespace RecallOperations.Api.Migrations
                     b.Navigation("User");
                 });
 
+            modelBuilder.Entity("VehicleRecall.Shared.Models.Department", b =>
+                {
+                    b.Navigation("Users");
+                });
+
+            modelBuilder.Entity("VehicleRecall.Shared.Models.RecallCampaign", b =>
+                {
+                    b.Navigation("CampaignVehicles");
+                });
+
             modelBuilder.Entity("VehicleRecall.Shared.Models.RecallCustomer", b =>
                 {
                     b.Navigation("UserAccount");
@@ -491,6 +645,8 @@ namespace RecallOperations.Api.Migrations
 
             modelBuilder.Entity("VehicleRecall.Shared.Models.Vehicle", b =>
                 {
+                    b.Navigation("CampaignVehicles");
+
                     b.Navigation("CustomerVehicles");
                 });
 #pragma warning restore 612, 618

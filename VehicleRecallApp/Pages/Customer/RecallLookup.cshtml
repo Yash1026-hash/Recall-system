@@ -22,8 +22,7 @@
             <div class="card shadow-sm">
                 <div class="card-body p-4">
                     <form method="post">
-                        <div asp-validation-summary="ModelOnly"
-                             class="text-danger mb-3"></div>
+                        <partial name="_ValidationSummary" model="Model" />
 
                         <label asp-for="Vin" class="form-label"></label>
 

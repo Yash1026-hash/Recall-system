@@ -11,11 +11,15 @@ public class UserDbContext : DbContext
     }
 
     public DbSet<UserAccount> Users => Set<UserAccount>();
+    public DbSet<Department> Departments => Set<Department>();
     public DbSet<RecallCustomer> Customers => Set<RecallCustomer>();
     public DbSet<Vehicle> Vehicles => Set<Vehicle>();
     public DbSet<RecallCustomerVehicle> CustomerVehicles => Set<RecallCustomerVehicle>();
     public DbSet<Role> Roles => Set<Role>();
     public DbSet<UserRole> UserRoles => Set<UserRole>();
+    public DbSet<RecallCampaign> Campaigns => Set<RecallCampaign>();
+    public DbSet<CampaignVehicle> CampaignVehicles => Set<CampaignVehicle>();
+
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -23,12 +27,27 @@ public class UserDbContext : DbContext
         {
             entity.ToTable("KS_RecallUsers", "dbo");
             entity.HasKey(user => user.UserId);
+            entity.Property(user => user.IsActive).HasDefaultValue(true);
+            entity.Property(user => user.CreatedAt).HasDefaultValueSql("getdate()");
             entity.HasIndex(user => user.Username).IsUnique();
             entity.HasIndex(user => user.CustomerId).IsUnique();
+            entity.HasOne(user => user.Department)
+                .WithMany(department => department.Users)
+                .HasForeignKey(user => user.DepartmentId)
+                .OnDelete(DeleteBehavior.Restrict);
             entity.HasOne(user => user.Customer)
                 .WithOne(customer => customer.UserAccount)
                 .HasForeignKey<UserAccount>(user => user.CustomerId)
                 .OnDelete(DeleteBehavior.Restrict);
+        });
+
+        modelBuilder.Entity<Department>(entity =>
+        {
+            entity.ToTable("KS_Departments", "dbo");
+            entity.HasKey(department => department.DepartmentId);
+            entity.Property(department => department.Name).HasMaxLength(100).IsRequired();
+            entity.Property(department => department.Description).HasMaxLength(500).IsRequired();
+            entity.HasIndex(department => department.Name).IsUnique();
         });
 
         modelBuilder.Entity<Role>(entity =>
@@ -128,6 +147,37 @@ public class UserDbContext : DbContext
                 new RecallCustomerVehicle { CustomerId = 8, Vin = "1N4AL3AP9HC123463" },
                 new RecallCustomerVehicle { CustomerId = 9, Vin = "SALWR2RV7JA123464" },
                 new RecallCustomerVehicle { CustomerId = 10, Vin = "KMHD84LF5KU123465" });
+        });
+
+        modelBuilder.Entity<RecallCampaign>(entity =>
+        {
+            entity.ToTable("KS_Campaigns", "dbo");
+            entity.HasKey(c => c.NhtsaId);
+            entity.Property(c => c.NhtsaId).HasMaxLength(50).IsRequired();
+            entity.Property(c => c.Description).HasMaxLength(500).IsRequired();
+            entity.Property(c => c.AffectedComponent).HasMaxLength(100).IsRequired();
+            entity.Property(c => c.RemedyInstructions).HasMaxLength(1000);
+            entity.Property(c => c.Severity).HasMaxLength(50).IsRequired();
+            entity.Property(c => c.Status).HasMaxLength(50).IsRequired();
+            entity.Property(c => c.CreatedAt).HasDefaultValueSql("getdate()");
+            entity.Ignore(c => c.Users);
+            entity.Ignore(c => c.ImportErrors);
+        });
+
+        modelBuilder.Entity<CampaignVehicle>(entity =>
+        {
+            entity.ToTable("KS_CampaignVehicles", "dbo");
+            entity.HasKey(cv => new { cv.CampaignId, cv.Vin });
+            entity.Property(cv => cv.CampaignId).HasMaxLength(50);
+            entity.Property(cv => cv.Vin).HasMaxLength(17);
+            entity.HasOne(cv => cv.Campaign)
+                .WithMany(c => c.CampaignVehicles)
+                .HasForeignKey(cv => cv.CampaignId)
+                .OnDelete(DeleteBehavior.Cascade);
+            entity.HasOne(cv => cv.Vehicle)
+                .WithMany(v => v.CampaignVehicles)
+                .HasForeignKey(cv => cv.Vin)
+                .OnDelete(DeleteBehavior.Cascade);
         });
     }
 }

@@ -1,58 +1,84 @@
-using VehicleRecallApp.Models;
+using System.Net.Http.Json;
+using VehicleRecall.Shared.Models;
 
 namespace VehicleRecallApp.Services;
 
 public class InMemoryCampaignStore
 {
-    private readonly List<RecallCampaign> _campaigns = new()
+    private readonly IHttpClientFactory _httpClientFactory;
+    private readonly List<RecallCampaign> _localCache = new();
+
+    public InMemoryCampaignStore(IHttpClientFactory httpClientFactory)
     {
-        new RecallCampaign
-        {
-            NhtsaId = "24V-102",
-            Description = "Fuel pump failure risk",
-            AffectedComponent = "Fuel Pump",
-            Severity = "High",
-            AffectedVins = 12480,
-            Users = new List<CampaignUserStatus>
-            {
-                new() { CustomerName = "Alicia Patel", Email = "alicia.patel@example.com", Vin = "1HGBH41JXMN109186", AppointmentBooked = true, RepairCompleted = false },
-                new() { CustomerName = "Marcus Lee", Email = "marcus.lee@example.com", Vin = "2T2BK1BA6KC123456", AppointmentBooked = false, RepairCompleted = false },
-                new() { CustomerName = "Nora Singh", Email = "nora.singh@example.com", Vin = "3VW2K7AJ5PM100123", AppointmentBooked = true, RepairCompleted = true }
-            }
-        },
-        new RecallCampaign
-        {
-            NhtsaId = "24V-223",
-            Description = "Brake booster recall",
-            AffectedComponent = "Brake Booster",
-            Severity = "Critical",
-            AffectedVins = 8605,
-            Status = "Monitoring",
-            Users = new List<CampaignUserStatus>
-            {
-                new() { CustomerName = "Daniel Brooks", Email = "daniel.brooks@example.com", Vin = "JH4KA9650LC012345", AppointmentBooked = true, RepairCompleted = false },
-                new() { CustomerName = "Emma Davis", Email = "emma.davis@example.com", Vin = "1C4RJFBG1MC289142", AppointmentBooked = false, RepairCompleted = false },
-                new() { CustomerName = "Rafael Gomez", Email = "rafael.gomez@example.com", Vin = "WAUZZZ8K3FA123456", AppointmentBooked = true, RepairCompleted = true }
-            }
-        }
-    };
+        _httpClientFactory = httpClientFactory;
+    }
 
     public List<RecallCampaign> GetAll()
     {
-        return _campaigns;
+        try
+        {
+            var client = _httpClientFactory.CreateClient("ApiClient");
+            var response = client.GetAsync("/api/campaigns").GetAwaiter().GetResult();
+            if (response.IsSuccessStatusCode)
+            {
+                var campaigns = response.Content.ReadFromJsonAsync<List<RecallCampaign>>().GetAwaiter().GetResult();
+                if (campaigns is not null)
+                {
+                    _localCache.Clear();
+                    _localCache.AddRange(campaigns);
+                    return campaigns;
+                }
+            }
+        }
+        catch
+        {
+            // Fallback to local cache if API is offline
+        }
+
+        return _localCache;
     }
 
-    public RecallCampaign? GetById(string campaignId) =>
-        _campaigns.FirstOrDefault(campaign =>
+    public RecallCampaign? GetById(string campaignId)
+    {
+        try
+        {
+            var client = _httpClientFactory.CreateClient("ApiClient");
+            var response = client.GetAsync($"/api/campaigns/{Uri.EscapeDataString(campaignId)}").GetAwaiter().GetResult();
+            if (response.IsSuccessStatusCode)
+            {
+                var campaign = response.Content.ReadFromJsonAsync<RecallCampaign>().GetAwaiter().GetResult();
+                if (campaign is not null)
+                {
+                    var index = _localCache.FindIndex(c => string.Equals(c.NhtsaId, campaignId, StringComparison.OrdinalIgnoreCase));
+                    if (index >= 0)
+                    {
+                        _localCache[index] = campaign;
+                    }
+                    else
+                    {
+                        _localCache.Add(campaign);
+                    }
+                    return campaign;
+                }
+            }
+        }
+        catch
+        {
+            // Fallback to local cache if API is offline
+        }
+
+        return _localCache.FirstOrDefault(campaign =>
             string.Equals(campaign.NhtsaId, campaignId, StringComparison.OrdinalIgnoreCase));
+    }
 
     public CampaignSummary GetSummary()
     {
+        var campaigns = GetAll();
         return new CampaignSummary
         {
-            TotalCampaigns = _campaigns.Count,
-            ActiveCampaigns = _campaigns.Count(c => c.Status == "Active"),
-            TotalAffectedVins = _campaigns.Sum(c => c.AffectedVins)
+            TotalCampaigns = campaigns.Count,
+            ActiveCampaigns = campaigns.Count(c => c.Status == "Active"),
+            TotalAffectedVins = campaigns.Sum(c => c.AffectedVins)
         };
     }
 
@@ -63,7 +89,34 @@ public class InMemoryCampaignStore
             campaign.Users = new List<CampaignUserStatus>();
         }
 
-        _campaigns.Add(campaign);
+        try
+        {
+            var client = _httpClientFactory.CreateClient("ApiClient");
+            var response = client.PostAsJsonAsync("/api/campaigns", campaign).GetAwaiter().GetResult();
+            if (response.IsSuccessStatusCode)
+            {
+                var saved = response.Content.ReadFromJsonAsync<RecallCampaign>().GetAwaiter().GetResult();
+                if (saved is not null)
+                {
+                    campaign.Users = saved.Users;
+                    campaign.AffectedVins = saved.AffectedVins;
+                }
+            }
+        }
+        catch
+        {
+            // Keep in local cache if API is offline
+        }
+
+        var existingIndex = _localCache.FindIndex(c => string.Equals(c.NhtsaId, campaign.NhtsaId, StringComparison.OrdinalIgnoreCase));
+        if (existingIndex >= 0)
+        {
+            _localCache[existingIndex] = campaign;
+        }
+        else
+        {
+            _localCache.Add(campaign);
+        }
     }
 
     public sealed class CampaignSummary

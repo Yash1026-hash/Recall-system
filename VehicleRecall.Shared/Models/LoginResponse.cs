@@ -7,4 +7,7 @@ public sealed record LoginResponse(
     string FullName,
     string Email,
     string AccessToken,
-    DateTimeOffset ExpiresAt);
+    DateTimeOffset ExpiresAt)
+{
+    public IReadOnlyList<string> Roles { get; init; } = Array.Empty<string>();
+}

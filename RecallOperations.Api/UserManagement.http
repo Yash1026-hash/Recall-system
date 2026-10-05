@@ -1,0 +1,76 @@
+@baseUrl = http://localhost:5070
+@managerToken = replace-with-manager-access-token
+
+### List users with optional filters
+GET {{baseUrl}}/api/users?page=1&pageSize=100&departmentId=1&isActive=true
+Authorization: Bearer {{managerToken}}
+
+### Get one user
+GET {{baseUrl}}/api/users/1
+Authorization: Bearer {{managerToken}}
+
+### Get available roles
+GET {{baseUrl}}/api/users/roles
+Authorization: Bearer {{managerToken}}
+
+### Update a user's profile
+PATCH {{baseUrl}}/api/users/1/profile
+Authorization: Bearer {{managerToken}}
+Content-Type: application/json
+
+{
+  "username": "manager",
+  "fullName": "Alicia Morgan",
+  "email": "manager@vehiclecompany.com",
+  "departmentId": 1
+}
+
+### Replace a user's roles (at least one role is required)
+PUT {{baseUrl}}/api/users/1/roles
+Authorization: Bearer {{managerToken}}
+Content-Type: application/json
+
+{
+  "roles": ["Manager"]
+}
+
+### Activate or deactivate a user
+PATCH {{baseUrl}}/api/users/1/status
+Authorization: Bearer {{managerToken}}
+Content-Type: application/json
+
+{
+  "isActive": false
+}
+
+### List departments
+GET {{baseUrl}}/api/departments
+Authorization: Bearer {{managerToken}}
+
+### Get department details
+GET {{baseUrl}}/api/departments/1
+Authorization: Bearer {{managerToken}}
+
+### Create a department
+POST {{baseUrl}}/api/departments
+Authorization: Bearer {{managerToken}}
+Content-Type: application/json
+
+{
+  "name": "Example Department",
+  "description": "Example department for API testing."
+}
+
+### Update a department
+PUT {{baseUrl}}/api/departments/1
+Authorization: Bearer {{managerToken}}
+Content-Type: application/json
+
+{
+  "name": "Operations Management",
+  "description": "Management and operations."
+}
+
+### Delete a department (returns conflict if users are assigned)
+DELETE {{baseUrl}}/api/departments/999999
+Authorization: Bearer {{managerToken}}

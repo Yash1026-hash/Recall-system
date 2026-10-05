@@ -26,7 +26,9 @@ public class UserStore
         string? campaign = null,
         string? sort = null,
         int page = 1,
-        int pageSize = 10)
+        int pageSize = 10,
+        int? departmentId = null,
+        bool? isActive = null)
     {
         page = page < 1 ? 1 : page;
         pageSize = pageSize < 1 ? 10 : pageSize;
@@ -36,18 +38,30 @@ public class UserStore
             .AsNoTracking()
             .Include(user => user.UserRoles)
                 .ThenInclude(userRole => userRole.Role)
+            .Include(user => user.Department)
+            .Include(user => user.Customer)
             .AsQueryable();
 
         if (!string.IsNullOrWhiteSpace(role))
         {
             var roleFilter = role.Trim();
-            query = query.Where(user => user.Role == roleFilter);
+            query = query.Where(user => user.UserRoles.Any(userRole => userRole.Role.Name == roleFilter));
         }
 
         if (!string.IsNullOrWhiteSpace(registrationStatus))
         {
             var statusFilter = registrationStatus.Trim();
             query = query.Where(user => user.RegistrationStatus == statusFilter);
+        }
+
+        if (departmentId.HasValue)
+        {
+            query = query.Where(user => user.DepartmentId == departmentId.Value);
+        }
+
+        if (isActive.HasValue)
+        {
+            query = query.Where(user => user.IsActive == isActive.Value);
         }
 
         if (!string.IsNullOrWhiteSpace(search))
@@ -143,6 +157,8 @@ public class UserStore
         _context.Users
             .Include(user => user.UserRoles)
                 .ThenInclude(userRole => userRole.Role)
+            .Include(user => user.Department)
+            .Include(user => user.Customer)
             .FirstOrDefault(user => user.UserId == userId);
 
     public UserAccount CreateStaffUser(StaffUserRequest request)
@@ -163,13 +179,27 @@ public class UserStore
         var role = _context.Roles.SingleOrDefault(existingRole => existingRole.Name == request.Role)
             ?? throw new InvalidOperationException("RoleNotFound");
 
+        var departmentName = !string.IsNullOrWhiteSpace(request.Department)
+            ? request.Department.Trim()
+            : request.Role == "Manager" ? "Operations Management" : "Field Engineering & Service";
+        var department = request.DepartmentId > 0
+            ? _context.Departments.SingleOrDefault(existingDepartment => existingDepartment.DepartmentId == request.DepartmentId)
+            : _context.Departments.SingleOrDefault(existingDepartment => existingDepartment.Name == departmentName);
+        if (department is null)
+        {
+            throw new InvalidOperationException("DepartmentNotFound");
+        }
+
         var user = new UserAccount
         {
             Username = username,
             FullName = request.FullName.Trim(),
             Email = email,
             Role = request.Role,
+            DepartmentId = department.DepartmentId,
+            Department = department,
             RegistrationStatus = "Registered",
+            CreatedAt = DateTime.UtcNow,
             CustomerId = null,
             UserRoles = new List<UserRole> { new() { Role = role } }
         };
@@ -185,6 +215,7 @@ public class UserStore
         var user = _context.Users
             .Include(existingUser => existingUser.UserRoles)
                 .ThenInclude(userRole => userRole.Role)
+            .Include(existingUser => existingUser.Department)
             .FirstOrDefault(existingUser => existingUser.UserId == userId);
         if (user is null)
         {
@@ -197,17 +228,9 @@ public class UserStore
             throw new InvalidOperationException("RoleNotFound");
         }
 
-        user.Role = role;
-        foreach (var existingRole in user.UserRoles.Where(userRole => userRole.RoleId != relatedRole.RoleId).ToList())
-        {
-            user.UserRoles.Remove(existingRole);
-        }
-
-        if (user.UserRoles.All(userRole => userRole.RoleId != relatedRole.RoleId))
-        {
-            user.UserRoles.Add(new UserRole { UserId = userId, Role = relatedRole });
-        }
-
+        user.UserRoles.Clear();
+        user.UserRoles.Add(new UserRole { UserId = userId, Role = relatedRole });
+        user.Role = relatedRole.Name;
         _context.SaveChanges();
         return user;
     }
@@ -217,6 +240,7 @@ public class UserStore
         var user = _context.Users
             .Include(existingUser => existingUser.UserRoles)
                 .ThenInclude(userRole => userRole.Role)
+            .Include(existingUser => existingUser.Department)
             .FirstOrDefault(existingUser => existingUser.UserId == userId);
 
         if (user is null)
@@ -225,7 +249,7 @@ public class UserStore
         }
 
         var normalizedUsername = request.Username.Trim();
-        var normalizedEmail = request.Email.Trim();
+        var normalizedEmail = request.Email.Trim().ToLowerInvariant();
 
         if (_context.Users.Any(existingUser =>
                 existingUser.UserId != userId &&
@@ -244,9 +268,189 @@ public class UserStore
         user.Username = normalizedUsername;
         user.Email = normalizedEmail;
         user.FullName = request.FullName.Trim();
+        _context.SaveChanges();
+        return user;
+    }
+
+    public UserAccount? UpdateUserProfile(int userId, UpdateUserRequest request)
+    {
+        var user = _context.Users
+            .Include(existingUser => existingUser.UserRoles)
+                .ThenInclude(userRole => userRole.Role)
+            .Include(existingUser => existingUser.Department)
+            .FirstOrDefault(existingUser => existingUser.UserId == userId);
+
+        if (user is null)
+        {
+            return null;
+        }
+
+        var normalizedUsername = request.Username.Trim();
+        var normalizedEmail = request.Email.Trim().ToLowerInvariant();
+
+        if (_context.Users.Any(existingUser =>
+                existingUser.UserId != userId &&
+                existingUser.Username == normalizedUsername))
+        {
+            throw new InvalidOperationException("UsernameAlreadyUsed");
+        }
+
+        if (_context.Users.Any(existingUser =>
+                existingUser.UserId != userId &&
+                existingUser.Email == normalizedEmail))
+        {
+            throw new InvalidOperationException("EmailAlreadyRegistered");
+        }
+
+        user.Username = normalizedUsername;
+        user.Email = normalizedEmail;
+        user.FullName = request.FullName.Trim();
+        var department = _context.Departments.SingleOrDefault(
+            existingDepartment => existingDepartment.DepartmentId == request.DepartmentId);
+        if (department is null)
+        {
+            throw new InvalidOperationException("DepartmentNotFound");
+        }
+
+        user.DepartmentId = department.DepartmentId;
+        user.Department = department;
 
         _context.SaveChanges();
         return user;
+    }
+
+    public IReadOnlyList<Role> GetRoles() =>
+        _context.Roles.AsNoTracking().OrderBy(role => role.Name).ToList();
+
+    public UserAccount? UpdateUserRoles(int userId, IReadOnlyList<string> roleNames)
+    {
+        if (roleNames is null || roleNames.Count == 0 || roleNames.Any(string.IsNullOrWhiteSpace))
+        {
+            throw new InvalidOperationException("AtLeastOneRoleRequired");
+        }
+
+        var distinctNames = roleNames
+            .Select(roleName => roleName.Trim())
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .ToList();
+
+        var availableRoles = _context.Roles
+            .Where(role => distinctNames.Contains(role.Name))
+            .ToList();
+        if (availableRoles.Count != distinctNames.Count)
+        {
+            throw new InvalidOperationException("RoleNotFound");
+        }
+        var roles = distinctNames
+            .Select(name => availableRoles.Single(role =>
+                string.Equals(role.Name, name, StringComparison.OrdinalIgnoreCase)))
+            .ToList();
+
+        var user = _context.Users
+            .Include(existingUser => existingUser.UserRoles)
+            .Include(existingUser => existingUser.Department)
+            .FirstOrDefault(existingUser => existingUser.UserId == userId);
+        if (user is null)
+        {
+            return null;
+        }
+
+        user.UserRoles.Clear();
+        foreach (var role in roles)
+        {
+            user.UserRoles.Add(new UserRole { UserId = userId, Role = role });
+        }
+
+        user.Role = roles[0].Name;
+        _context.SaveChanges();
+        return user;
+    }
+
+    public UserAccount? UpdateUserStatus(int userId, bool isActive)
+    {
+        var user = GetById(userId);
+        if (user is null)
+        {
+            return null;
+        }
+
+        user.IsActive = isActive;
+        _context.SaveChanges();
+        return user;
+    }
+
+    public IReadOnlyList<DepartmentResponse> GetDepartmentSummaries() =>
+        _context.Departments
+            .AsNoTracking()
+            .OrderBy(department => department.Name)
+            .Select(department => new DepartmentResponse(
+                department.DepartmentId,
+                department.Name,
+                department.Description,
+                department.Users.Count))
+            .ToList();
+
+    public Department? GetDepartmentById(int departmentId) =>
+        _context.Departments
+            .Include(department => department.Users)
+            .FirstOrDefault(department => department.DepartmentId == departmentId);
+
+    public Department CreateDepartment(CreateDepartmentRequest request)
+    {
+        var name = request.Name.Trim();
+        if (_context.Departments.Any(department => department.Name == name))
+        {
+            throw new InvalidOperationException("DepartmentAlreadyExists");
+        }
+
+        var department = new Department
+        {
+            Name = name,
+            Description = (request.Description ?? string.Empty).Trim()
+        };
+        _context.Departments.Add(department);
+        _context.SaveChanges();
+        return department;
+    }
+
+    public Department? UpdateDepartment(int departmentId, UpdateDepartmentRequest request)
+    {
+        var department = _context.Departments.Find(departmentId);
+        if (department is null)
+        {
+            return null;
+        }
+
+        var name = request.Name.Trim();
+        if (_context.Departments.Any(existingDepartment =>
+                existingDepartment.DepartmentId != departmentId &&
+                existingDepartment.Name == name))
+        {
+            throw new InvalidOperationException("DepartmentAlreadyExists");
+        }
+
+        department.Name = name;
+        department.Description = (request.Description ?? string.Empty).Trim();
+        _context.SaveChanges();
+        return department;
+    }
+
+    public bool DeleteDepartment(int departmentId)
+    {
+        var department = _context.Departments.Find(departmentId);
+        if (department is null)
+        {
+            return false;
+        }
+
+        if (_context.Users.Any(user => user.DepartmentId == departmentId))
+        {
+            throw new InvalidOperationException("DepartmentInUse");
+        }
+
+        _context.Departments.Remove(department);
+        _context.SaveChanges();
+        return true;
     }
 
     public (int Added, int Updated) ImportCustomerRoster(
@@ -353,6 +557,13 @@ public class UserStore
             throw new InvalidOperationException("RoleNotFound");
         }
 
+        var department = _context.Departments.SingleOrDefault(
+            existingDepartment => existingDepartment.Name == "Customer Support & Warranty");
+        if (department is null)
+        {
+            throw new InvalidOperationException("DepartmentNotFound");
+        }
+
         var userAccount = new UserAccount
         {
             Username = username,
@@ -360,7 +571,10 @@ public class UserStore
             Role = "Customer",
             FullName = customer.FullName,
             Email = customer.Email,
+            DepartmentId = department.DepartmentId,
+            Department = department,
             RegistrationStatus = "Registered",
+            CreatedAt = DateTime.UtcNow,
             CustomerId = customer.CustomerId,
             UserRoles = new List<UserRole> { new() { Role = customerRole } }
         };
@@ -376,9 +590,13 @@ public class UserStore
     {
         var normalizedUsername = username.Trim().ToUpperInvariant();
         var user = _context.Users
+            .Include(account => account.UserRoles)
+                .ThenInclude(userRole => userRole.Role)
+            .Include(account => account.Department)
             .FirstOrDefault(account => account.Username.ToUpper() == normalizedUsername);
 
         if (user is null ||
+            !user.IsActive ||
             !string.Equals(user.RegistrationStatus, "Registered", StringComparison.OrdinalIgnoreCase))
         {
             return null;

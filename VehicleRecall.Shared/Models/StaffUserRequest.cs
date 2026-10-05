@@ -25,4 +25,10 @@ public class StaffUserRequest
     [Required]
     [RegularExpression("^(Manager|Technician)$")]
     public string Role { get; set; } = "Technician";
+
+    [StringLength(100)]
+    public string? Department { get; set; }
+
+    [Range(0, int.MaxValue)]
+    public int DepartmentId { get; set; }
 }

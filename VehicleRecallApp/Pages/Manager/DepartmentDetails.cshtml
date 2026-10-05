@@ -1,0 +1,52 @@
+@page "/Manager/Departments/Details/{id:int}"
+@model VehicleRecallApp.Pages.Manager.DepartmentDetailsModel
+
+@{
+    ViewData["Title"] = Model.Department is null ? "Department Details" : Model.Department.Name;
+}
+
+<div class="container py-4">
+    <a asp-page="/Manager/Departments" class="text-decoration-none">&larr; Back to departments</a>
+
+    @if (Model.ErrorMessage is not null)
+    {
+        <partial name="_AlertMessage" model='new AlertMessageModel(Model.ErrorMessage, "danger")' />
+    }
+
+    @if (Model.Department is not null)
+    {
+        @if (TempData["SuccessMessage"] is string successMessage)
+        {
+            <partial name="_AlertMessage" model='new AlertMessageModel(successMessage, "success")' />
+        }
+        <div class="card shadow-sm mt-4">
+            <div class="card-body p-4">
+                <p class="eyebrow mb-2">Department details</p>
+                <h1 class="h2">@Model.Department.Name</h1>
+                <p class="text-muted">@(!string.IsNullOrWhiteSpace(Model.Department.Description) ? Model.Department.Description : "No description provided.")</p>
+                <p><strong>Assigned users:</strong> @Model.Department.UserCount</p>
+                <a asp-page="/Manager/EditDepartment" asp-route-id="@Model.Department.DepartmentId" class="btn btn-primary">Edit department</a>
+            </div>
+        </div>
+
+        <section class="mt-4" aria-labelledby="department-users-heading">
+            <h2 id="department-users-heading" class="h4">Assigned users</h2>
+            @if (Model.Users.Count == 0)
+            {
+                <p class="text-muted">No user accounts are assigned to this department.</p>
+            }
+            else
+            {
+                <ul class="list-group">
+                    @foreach (var user in Model.Users)
+                    {
+                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                            <span>@user.FullName <span class="text-muted">(@user.Username)</span></span>
+                            <a asp-page="/Users/Details" asp-route-id="@user.UserId">View user</a>
+                        </li>
+                    }
+                </ul>
+            }
+        </section>
+    }
+</div>

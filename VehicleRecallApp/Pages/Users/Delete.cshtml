@@ -1,0 +1,36 @@
+@page "/Users/Delete/{id:int}"
+@model VehicleRecallApp.Pages.Users.DeleteModel
+
+@{
+    ViewData["Title"] = Model.UserDetails is not null
+        ? $"Delete User - {Model.UserDetails.Username}"
+        : "Delete User";
+}
+
+<div class="container py-4">
+    <div class="mb-4">
+        <a asp-page="/Manager/ControlRoom" class="text-decoration-none">&larr; Back to Manager Control Room</a>
+    </div>
+
+    @if (Model.ErrorMessage is not null)
+    {
+        <partial name="_AlertMessage" model='new AlertMessageModel(Model.ErrorMessage, "danger")' />
+    }
+
+    @if (Model.UserDetails is not null)
+    {
+        <div class="card border-danger shadow-sm mx-auto" style="max-width: 40rem;">
+            <div class="card-body p-4">
+                <h1 class="h3 text-danger">Delete user</h1>
+                <p>Are you sure you want to delete this user?</p>
+                <partial name="_UserSummary" model="Model.UserDetails" />
+                <p class="text-muted mt-3 mb-4">This permanently removes the account and cannot be undone.</p>
+
+                <form method="post" asp-page-handler="Delete" asp-route-id="@Model.UserDetails.UserId" class="d-flex gap-2">
+                    <a asp-page="/Manager/ControlRoom" class="btn btn-outline-secondary">Cancel</a>
+                    <button type="submit" class="btn btn-danger">Delete user</button>
+                </form>
+            </div>
+        </div>
+    }
+</div>

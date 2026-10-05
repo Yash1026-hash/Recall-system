@@ -29,7 +29,9 @@ public class UsersController : ControllerBase
         [FromQuery] string? campaign,
         [FromQuery] string? sort,
         [FromQuery] int page = 1,
-        [FromQuery] int pageSize = 10)
+        [FromQuery] int pageSize = 10,
+        [FromQuery] int? departmentId = null,
+        [FromQuery] bool? isActive = null)
     {
         var users = _userStore.SearchUsers(
                 role,
@@ -40,12 +42,19 @@ public class UsersController : ControllerBase
                 campaign,
                 sort,
                 page,
-                pageSize)
+                pageSize,
+                departmentId,
+                isActive)
             .Select(UserSummaryResponse.From)
             .ToList();
 
         return Ok(users);
     }
+
+    [HttpGet("roles")]
+    [Authorize(Policy = "ManagerOnly")]
+    public ActionResult<IReadOnlyList<string>> GetRoles() =>
+        Ok(_userStore.GetRoles().Select(role => role.Name).ToList());
 
     [HttpGet("{id:int}")]
     [Authorize(Policy = "ManagerOnly")]
@@ -85,6 +94,10 @@ public class UsersController : ControllerBase
         {
             return Conflict(new { message = "An account already exists for this email." });
         }
+        catch (InvalidOperationException ex) when (ex.Message == "DepartmentNotFound")
+        {
+            return BadRequest(new { message = "Choose an existing department." });
+        }
     }
 
     [HttpPatch("{id:int}/role")]
@@ -99,6 +112,46 @@ public class UsersController : ControllerBase
         }
 
         var user = _userStore.UpdateUserRole(id, request.Role);
+        return user is null
+            ? NotFound(new { message = "User not found." })
+            : Ok(UserSummaryResponse.From(user));
+    }
+
+    [HttpPut("{id:int}/roles")]
+    [Authorize(Policy = "ManagerOnly")]
+    public ActionResult<UserSummaryResponse> UpdateUserRoles(
+        [FromRoute] int id,
+        [FromBody] UpdateUserRolesRequest request)
+    {
+        if (!ModelState.IsValid)
+        {
+            return ValidationProblem(ModelState);
+        }
+
+        try
+        {
+            var user = _userStore.UpdateUserRoles(id, request.Roles);
+            return user is null
+                ? NotFound(new { message = "User not found." })
+                : Ok(UserSummaryResponse.From(user));
+        }
+        catch (InvalidOperationException ex) when (ex.Message == "RoleNotFound")
+        {
+            return BadRequest(new { message = "Choose only roles that exist." });
+        }
+        catch (InvalidOperationException ex) when (ex.Message == "AtLeastOneRoleRequired")
+        {
+            return BadRequest(new { message = "A user must have at least one role." });
+        }
+    }
+
+    [HttpPatch("{id:int}/status")]
+    [Authorize(Policy = "ManagerOnly")]
+    public ActionResult<UserSummaryResponse> UpdateUserStatus(
+        [FromRoute] int id,
+        [FromBody] UpdateUserStatusRequest request)
+    {
+        var user = _userStore.UpdateUserStatus(id, request.IsActive);
         return user is null
             ? NotFound(new { message = "User not found." })
             : Ok(UserSummaryResponse.From(user));
@@ -192,6 +245,38 @@ public class UsersController : ControllerBase
         catch (InvalidOperationException ex) when (ex.Message == "EmailAlreadyRegistered")
         {
             return Conflict(new { message = "An account already exists for this email." });
+        }
+    }
+
+    [HttpPatch("{id:int}/profile")]
+    [Authorize(Policy = "ManagerOnly")]
+    public ActionResult<UserSummaryResponse> UpdateUserProfile(
+        [FromRoute] int id,
+        [FromBody] UpdateUserRequest request)
+    {
+        if (!ModelState.IsValid)
+        {
+            return ValidationProblem(ModelState);
+        }
+
+        try
+        {
+            var user = _userStore.UpdateUserProfile(id, request);
+            return user is null
+                ? NotFound(new { message = "User not found." })
+                : Ok(UserSummaryResponse.From(user));
+        }
+        catch (InvalidOperationException ex) when (ex.Message == "UsernameAlreadyUsed")
+        {
+            return Conflict(new { message = "That username is already in use." });
+        }
+        catch (InvalidOperationException ex) when (ex.Message == "EmailAlreadyRegistered")
+        {
+            return Conflict(new { message = "An account already exists for this email." });
+        }
+        catch (InvalidOperationException ex) when (ex.Message == "DepartmentNotFound")
+        {
+            return BadRequest(new { message = "Choose an existing department." });
         }
     }
 
